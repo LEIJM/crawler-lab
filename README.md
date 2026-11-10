@@ -42,7 +42,7 @@ npm run deploy:pages        # Pages：构建 dist/，上传静态资源并启用
 ```
 
 - Workers：`wrangler.jsonc`（`assets` + Worker），SPA 深链接由 `not_found_handling` 回退到 `index.html`，`/api/*`、`/kaptcha.jpg`、`POST /login` 走 Worker。
-- Pages：构建输出 `dist/`，`public/_redirects` 做 SPA 回退，`functions/_middleware.js` 处理接口（`wrangler.pages.jsonc`）。
+- Pages：构建输出 `dist/`，由 Pages 默认 SPA 回退处理深链接，`functions/_middleware.js` 处理接口（`wrangler.pages.jsonc`）。
 - 验证码会话改为 AES-GCM 令牌（Cookie / cid），不依赖进程内存，可在边缘多实例上使用。可选环境变量 `CAPTCHA_SECRET` 覆盖默认密钥。
 
 ## 页面与 notebook 对照

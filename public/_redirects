@@ -1,3 +1,0 @@
-# Cloudflare Pages SPA：深链接（/login、/shopping/index、/s 等）回退到前端路由
-# Functions 对 /api/*、/kaptcha.jpg、/login 优先于本规则
-/*    /index.html   200
