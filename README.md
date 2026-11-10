@@ -9,8 +9,11 @@
 | 部分 | 说明 |
 |---|---|
 | `src/` | Vue 3 + Vue Router 4 前端（Vite 8 构建），11 个功能页面 |
-| `server/server.js` | **零依赖** Node 服务器（仅内置模块），托管 `dist/` 并提供课程全部接口 |
+| `server/api.js` | 课程接口（Fetch API），Node / Workers / Pages 共用 |
+| `server/server.js` | **零依赖** Node 服务器（仅内置模块），托管 `dist/` 并适配接口 |
 | `server/captcha.js` | 纯手写 PNG 验证码生成器（CRC32 + zlib + 七段数码管字形），对应 `/kaptcha.jpg` |
+| `worker/` | Cloudflare Workers 入口（静态资源 + 接口） |
+| `functions/` | Cloudflare Pages Functions（与 Worker 同一套接口） |
 | `dist/` | `npm run build` 产物（部署时随 server 一起拷贝即可） |
 
 ## 快速开始
@@ -29,6 +32,18 @@ npm run serve      # 启动服务器，默认端口 8188（PORT=80 可覆盖）
 
 **内网离线部署**：服务器零外部依赖，在联网机器完成 `npm install && npm run build` 后，
 只需把 `dist/` 和 `server/` 拷贝到内网服务器，执行 `node server/server.js` 即可。
+
+**Cloudflare Workers / Pages**：
+
+```bash
+npx wrangler login          # 首次：登录 Cloudflare
+npm run deploy              # Workers（推荐）：构建 dist/ 并 wrangler deploy
+npm run deploy:pages        # Pages：构建 dist/，上传静态资源并启用 functions/
+```
+
+- Workers：`wrangler.jsonc`（`assets` + Worker），SPA 深链接由 `not_found_handling` 回退到 `index.html`，`/api/*`、`/kaptcha.jpg`、`POST /login` 走 Worker。
+- Pages：构建输出 `dist/`，`public/_redirects` 做 SPA 回退，`functions/_middleware.js` 处理接口（`wrangler.pages.jsonc`）。
+- 验证码会话改为 AES-GCM 令牌（Cookie / cid），不依赖进程内存，可在边缘多实例上使用。可选环境变量 `CAPTCHA_SECRET` 覆盖默认密钥。
 
 ## 页面与 notebook 对照
 
@@ -80,7 +95,7 @@ h3.t                      百度结果标题       By.CSS_SELECTOR 'h3.t'
 ## 技术说明
 
 - 前端：Vue 3.5 + Vue Router 4 + Vite 8（rolldown 构建），无 UI 框架依赖，无外部图片/字体资源，可完全离线运行
-- 后端：Node ≥ 18，仅 `http` / `fs` / `path` / `crypto` / `zlib` 内置模块
+- 后端：Node ≥ 18，仅 `http` / `fs` / `path` / `crypto` / `zlib` 内置模块；Cloudflare 部署时 Worker 开启 `nodejs_compat` 以复用 PNG 生成器
 - 验证码：4 位数字、七段数码管字形、随机颜色/抖动/干扰线，`RYSESSID` 会话绑定（登录）与 `cid` 绑定（练习）双机制
 - 登录态：人邮 `ryName` / `ryToken`；百度 `BAIDUID` / `BDUSS`（base64(username) 编码，可解码显示昵称），
   两者均可用 `driver.add_cookie()` 注入完成 Cookies 登录练习

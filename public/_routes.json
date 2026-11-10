@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "include": ["/api/*", "/kaptcha.jpg", "/login"],
+  "exclude": []
+}

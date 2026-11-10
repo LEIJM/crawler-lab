@@ -141,6 +141,19 @@ npm run dev        # 打开 http://localhost:5173 即可完整使用，无需另
 # 生产模式（正式部署用）：
 npm run build      # 构建 dist/
 npm run serve      # node server/server.js，默认 8188 端口`
+
+const DEPLOY_CF = `# 首次：npx wrangler login
+
+# Workers（推荐，静态资源 + 接口一体）
+npm run deploy
+# 等价：npm run build && wrangler deploy
+
+# Pages（dist 静态托管 + functions/ 接口）
+npm run deploy:pages
+# 控制台 Git 集成：构建命令 npm run build，输出目录 dist
+# （Pages 项目请使用 wrangler.pages.jsonc，勿与 Workers 的 main 配置混用）
+
+# 可选：CAPTCHA_SECRET 覆盖验证码令牌密钥（Workers/Pages 环境变量）`
 </script>
 
 <template>
@@ -226,10 +239,15 @@ npm run serve      # node server/server.js，默认 8188 端口`
           <h4>开发模式（可省）</h4>
           <pre class="lab-code">{{ DEPLOY_DEV }}</pre>
         </div>
+        <div>
+          <h4>Cloudflare Workers / Pages</h4>
+          <pre class="lab-code">{{ DEPLOY_CF }}</pre>
+        </div>
       </div>
       <div class="lab-note info">
-        <span>要求 Node ≥ 18；服务器仅使用 Node 内置模块，<b>无需在部署机执行 npm install</b>。
-          构建产物位于 dist/，请勿将 dist 之外的业务代码暴露给公网。</span>
+        <span>自建部署要求 Node ≥ 18；服务器仅使用 Node 内置模块，<b>无需在部署机执行 npm install</b>。
+          构建产物位于 dist/。托管到 Cloudflare 时执行 <code>npm run deploy</code>（Workers）或
+          <code>npm run deploy:pages</code>（Pages），接口与 Node 版契约一致。</span>
       </div>
     </section>
 

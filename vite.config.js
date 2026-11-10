@@ -8,7 +8,7 @@ import { handleApi } from './server/server.js'
  * 把 server/server.js 的接口层（/kaptcha.jpg、/login、/api/*）直接挂载到
  * Vite 开发服务器的中间件里。这样 `npm run dev` 一条命令即可完整使用
  * 验证码、登录与闯关接口，无需另开终端启动后端，也彻底避免代理
- * ECONNREFUSED 问题。生产模式仍由 `node server/server.js` 提供同样接口。
+ * ECONNREFUSED 问题。生产模式由 Node 服务器或 Cloudflare Workers/Pages 提供同样接口。
  */
 function devApiMiddleware() {
   return {

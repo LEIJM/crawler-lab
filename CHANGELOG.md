@@ -2,6 +2,16 @@
 
 所有显著变更记录于此。版本遵循语义化版本号。
 
+## [1.0.2] - 2026-11-10
+
+### 新增
+
+- **Cloudflare Workers / Pages 托管**：`wrangler.jsonc` 以 Worker + 静态资源部署 SPA 与课程接口；
+  `wrangler.pages.jsonc` + `functions/_middleware.js` + `public/_redirects` 支持 Pages。
+  命令：`npm run deploy`、`npm run deploy:pages`。
+- 接口层改为 Fetch API（`server/api.js`），Node 服务器、Vite 开发中间件与边缘运行时共用。
+- 验证码会话改为 AES-GCM 无状态令牌（`RYSESSID` / `cid`），适配 Workers 无共享内存的约束。
+
 ## [1.0.1] - 2026-11-10
 
 ### 修复

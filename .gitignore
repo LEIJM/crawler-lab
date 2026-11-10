@@ -25,3 +25,9 @@ dist-ssr
 
 # 运行临时文件
 .temp/
+
+# Cloudflare
+.wrangler
+.dev.vars
+.dev.vars.*
+!.dev.vars.example

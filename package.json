@@ -1,14 +1,16 @@
 {
   "name": "crawler-lab",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "serve": "node server/server.js",
-    "selftest": "node server/server.js --selftest"
+    "selftest": "node server/server.js --selftest",
+    "deploy": "npm run build && wrangler deploy",
+    "deploy:pages": "npm run build && wrangler pages deploy --config wrangler.pages.jsonc --project-name crawler-lab"
   },
   "dependencies": {
     "vue": "^3.5.44",
@@ -16,6 +18,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.10",
-    "vite": "^8.3.6"
+    "vite": "^8.3.6",
+    "wrangler": "^4.47.0"
   }
 }
