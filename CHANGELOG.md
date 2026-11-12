@@ -54,7 +54,7 @@
   - `/challenge` 爬虫闯关 6 关（静态列表 / 异步加载 / 点击展开 / 分页表格 / 编码解码 / 请求头反爬），
     暗号答案仅存于服务端；
   - `/captcha` 验证码识读练习（cid 绑定、无限刷新、即时校验、正确率统计 + requests 参考代码）；
-  - `/docs` 教学文档（站点地图、账号、API 契约、部署指南、合规说明）。
+  - `/docs` 教学文档（站点地图、账号、API 契约、常见报错、合规说明；部署指南移至 README）。
 - **零依赖 Node 服务器** `server/server.js`：
   - 静态托管 `dist/` + history 路由回退（深链接直达 SPA）；
   - `GET /kaptcha.jpg` 验证码图片（Session 绑定，`Set-Cookie: RYSESSID`，10 分钟有效）；

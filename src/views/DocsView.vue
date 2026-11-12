@@ -1,17 +1,28 @@
 <script setup>
 /**
  * 教学文档（/docs）
- * 面向教师备课与学生自学：站点地图、API 契约、账号、部署指南与合规说明。
+ * 面向教师备课与学生自学：站点地图、API 契约、账号与合规说明。
+ * 部署指南见项目 README（快速开始 / 内网离线 / Cloudflare）。
  */
 import { onMounted, ref } from 'vue'
 
 const health = ref('检测中…')
+const healthState = ref('loading')   // loading | ok | err
 async function checkHealth() {
+  healthState.value = 'loading'
+  health.value = '检测中…'
   try {
     const res = await fetch('/api/health')
     const data = await res.json()
-    health.value = data.ok ? `服务正常 · ${new Date(data.ts).toLocaleString()}` : '异常'
+    if (data.ok) {
+      healthState.value = 'ok'
+      health.value = `服务正常 · ${new Date(data.ts).toLocaleString()}`
+    } else {
+      healthState.value = 'err'
+      health.value = '服务响应异常'
+    }
   } catch {
+    healthState.value = 'err'
     health.value = '接口不可达（开发模式下需先启动后端：node server/server.js）'
   }
 }
@@ -41,13 +52,59 @@ const ACCOUNTS = [
   { site: '伪百度（登录弹窗）', user: 'student', pwd: '123456', note: '与书城共用教学账号' }
 ]
 
+// 常见报错与教学案例（P1 新增：学生碰报错时可在站内找到对照，不必翻 README）
+const ERRORS = [
+  {
+    name: '翻页陷入无限往返（循环终止条件）',
+    scene: '百度翻页到末页',
+    when: '循环点击 a[last()]「下一页」翻页：第 1~9 页正常，翻到第 10 页后「下一页」消失，此时 a[last()] 命中的是「上一页」——脚本被带回第 9 页，「下一页」再次出现……如此 9↔10 无限往返。',
+    why: '末页确实没有「下一页」，但分页块里还有「上一页」和其他页码链接，a[last()] 在末页指向的不再是「下一页」。',
+    how: '每轮先检查「下一页」是否存在再点击：next = driver.find_elements(By.XPATH, \'//a[text()="下一页>"]\')；为空则退出循环。或断言当前页码小于最大页数。这是比异常捕获更稳妥的循环终止写法。'
+  },
+  {
+    name: 'NoSuchElementException',
+    scene: '定位不存在的元素',
+    when: 'find_element() 定位一个当前页面不存在的元素（如末页的「下一页」、练习场中标注「→ 其他页验证」的选择器）。',
+    why: '元素确实不在当前 DOM 中——异常本身是 Selenium 告诉你「找不到」的正常方式。',
+    how: '用 find_elements()（返回列表不抛异常）先判存在，或 try/except NoSuchElementException 优雅处理。'
+  },
+  {
+    name: '{"code":500,"msg":"验证码已失效，请刷新验证码后重试"}',
+    scene: 'requests 登录',
+    when: 'POST /login 返回验证码失效。',
+    why: '验证码与 RYSESSID 会话绑定且有效期仅 2 分钟。常见原因：没用 requests.Session（验证码和登录不在同一会话）；或取码后超过 2 分钟才提交。',
+    how: 'sess = requests.Session() 先 sess.get(kaptcha) 再 sess.post(login)，并尽快提交；超时后重新取码。'
+  },
+  {
+    name: '{"code":500,"msg":"验证码错误"}',
+    scene: 'requests 登录',
+    when: 'POST /login 返回验证码错误。',
+    why: 'verifyCode 与会话验证码不一致；注意本站验证码是 4 位数字，区分大小写的暗号类答案需完整复制。',
+    how: '重新加载验证码图片仔细识读（plt.imshow 放大看），或用 img.screenshot_as_png 元素级截图后人工识读。'
+  },
+  {
+    name: '403 请求被拒绝',
+    scene: '闯关第 6 关 /api/challenge/secret',
+    when: '不带 X-Student-Id 请求头时返回 {"code":403,...}。',
+    why: '接口要求身份请求头，这是请求头反爬的最小示例。',
+    how: 'requests.get(url, headers={\'X-Student-Id\': \'data221\'})；两种响应都请各复现一次再提交暗号。'
+  },
+  {
+    name: '「用户名或密码错误」',
+    scene: '登录（人邮 / 百度）',
+    when: '用 notebook 原代码 secret 模块里的真实账号登录失败。',
+    why: 'notebook 的 ryuser / bdpwd 是原站真实账号，模拟站不认识；这本身就是一次接口行为观察练习。',
+    how: '改用教学账号 student/123456 或 teacher/888888（见第 2 节账号表）。'
+  }
+]
+
 const APIS = [
   {
     method: 'GET',
     path: '/kaptcha.jpg',
     desc: '图形验证码。无 cid 参数时绑定 Session：响应携带 Set-Cookie: RYSESSID，10 分钟有效；带 ?cid=xxx 时返回该挑战的图片。',
     sample: `# 对应 notebook 单元格 4
-img = requests.get('http://SERVER:8188/kaptcha.jpg')
+img = requests.get('https://crawler-lab.030516.xyz/kaptcha.jpg')
 with open('./kaptcha.jpg', 'wb') as f:
     f.write(img.content)`
   },
@@ -57,9 +114,9 @@ with open('./kaptcha.jpg', 'wb') as f:
     desc: '书城登录。表单字段 username / password / verifyCode；验证码取自当前 Session（RYSESSID），失败提示验证码失效/错误。',
     sample: `# 对应 notebook 单元格 8
 sess = requests.Session()
-sess.get('http://SERVER:8188/kaptcha.jpg')   # 1. 先取验证码（种下 RYSESSID）
+sess.get('https://crawler-lab.030516.xyz/kaptcha.jpg')   # 1. 先取验证码（种下 RYSESSID）
 code = input('请输入验证码：')                # 2. 人工识读
-res = sess.post('http://SERVER:8188/login', data={
+res = sess.post('https://crawler-lab.030516.xyz/login', data={
     'username': 'student', 'password': '123456', 'verifyCode': code
 })
 print(res.json())   # {"code":200,"msg":"登录成功",...}；成功后携带 Set-Cookie: ryName / ryToken`
@@ -75,14 +132,14 @@ print(res.json())   # {"code":200,"msg":"登录成功",...}；成功后携带 Se
     method: 'POST',
     path: '/api/captcha/new',
     desc: '验证码练习：领取独立挑战。返回 {data:{cid, url}}，图片地址即 /kaptcha.jpg?cid=…。',
-    sample: `r = requests.post('http://SERVER:8188/api/captcha/new').json()
+    sample: `r = requests.post('https://crawler-lab.030516.xyz/api/captcha/new').json()
 print(r['data']['cid'], r['data']['url'])`
   },
   {
     method: 'POST',
     path: '/api/captcha/verify',
     desc: '验证码练习：校验答案。JSON 字段 cid / code，返回 {data:{pass:true|false}}。',
-    sample: `res = requests.post('http://SERVER:8188/api/captcha/verify',
+    sample: `res = requests.post('https://crawler-lab.030516.xyz/api/captcha/verify',
         json={'cid': cid, 'code': code}).json()
 print(res['data']['pass'])`
   },
@@ -90,7 +147,7 @@ print(res['data']['pass'])`
     method: 'POST',
     path: '/api/challenge/check',
     desc: '闯关答案校验。JSON 字段 level(1-6) / answer。答案仅存于服务端。',
-    sample: `res = requests.post('http://SERVER:8188/api/challenge/check',
+    sample: `res = requests.post('https://crawler-lab.030516.xyz/api/challenge/check',
         json={'level': 1, 'answer': 'CT-XXXX'}).json()
 print(res['data']['pass'])`
   },
@@ -98,7 +155,7 @@ print(res['data']['pass'])`
     method: 'GET',
     path: '/api/challenge/secret',
     desc: '反爬示例接口：要求请求头 X-Student-Id（任意非空值，示例 data221），否则返回 403 提示。',
-    sample: `res = requests.get('http://SERVER:8188/api/challenge/secret',
+    sample: `res = requests.get('https://crawler-lab.030516.xyz/api/challenge/secret',
         headers={'X-Student-Id': 'data221'})
 print(res.json())   # 缺少请求头时会收到 {"code":403,...}`
   },
@@ -106,54 +163,10 @@ print(res.json())   # 缺少请求头时会收到 {"code":403,...}`
     method: 'GET',
     path: '/api/health',
     desc: '健康检查，返回 {ok:true, ts}。',
-    sample: `curl http://SERVER:8188/api/health`
+    sample: `curl https://crawler-lab.030516.xyz/api/health`
   }
 ]
 
-const DEPLOY = `# 1) 安装依赖（首次）
-npm install
-
-# 2) 构建前端产物到 dist/
-npm run build
-
-# 3) 启动零依赖服务器（默认端口 8188，可用 PORT 覆盖）
-npm run serve
-# 或：node server/server.js / PORT=80 node server/server.js
-
-# 验证
-#   浏览器打开 http://localhost:8188          → 总领页
-#   curl http://localhost:8188/kaptcha.jpg -o k.jpg  → 验证码图片
-#   curl -X POST http://localhost:8188/api/health 之类接口可用`
-
-const DEPLOY_OFFLINE = `# 内网服务器无法 npm install 时：
-# 1. 在任意联网机器上完成 npm install && npm run build
-# 2. 仅需拷贝 dist/ 与 server/ 两个目录到内网服务器（服务器零外部依赖）
-# 3. 内网机器执行：
-node server/server.js --selftest   # 先自检（11 项）
-PORT=80 node server/server.js      # 再启动
-
-# 后台常驻（Linux）：
-PORT=80 nohup node server/server.js > lab.log 2>&1 &`
-
-const DEPLOY_DEV = `# 开发模式（单命令，验证码/登录/闯关接口已内置到 Vite 开发服务器）：
-npm run dev        # 打开 http://localhost:5173 即可完整使用，无需另开后端
-
-# 生产模式（正式部署用）：
-npm run build      # 构建 dist/
-npm run serve      # node server/server.js，默认 8188 端口`
-
-const DEPLOY_CF = `# 首次：npx wrangler login
-
-# Workers（推荐，静态资源 + 接口一体）
-npm run deploy
-# 等价：npm run build && wrangler deploy
-
-# Pages（dist 静态托管 + functions/ 接口）
-npm run deploy:pages
-# 控制台 Git 集成：构建命令 npm run build，输出目录 dist
-# （Pages 项目请使用 wrangler.pages.jsonc，勿与 Workers 的 main 配置混用）
-
-# 可选：CAPTCHA_SECRET 覆盖验证码令牌密钥（Workers/Pages 环境变量）`
 </script>
 
 <template>
@@ -161,12 +174,15 @@ npm run deploy:pages
     <div class="docs-head">
       <div>
         <h2>教学文档</h2>
-        <p class="docs-sub">站点地图 · 教学账号 · API 契约 · 部署指南 · 合规说明。本文档同时是教师备课手册。</p>
+        <p class="docs-sub">站点地图 · 教学账号 · API 契约 · 常见报错 · 合规说明。本文档同时是教师备课手册。</p>
       </div>
       <div class="health-box">
-        <span class="lab-tag" :class="health.startsWith('服务正常') ? 'green' : 'amber'">服务状态</span>
-        <span class="health-text">{{ health }}</span>
-        <button class="lab-btn ghost small" @click="checkHealth">刷新</button>
+        <span class="lab-tag" :class="{ green: healthState === 'ok', amber: healthState === 'err' }"
+              :aria-label="healthState === 'ok' ? '服务正常' : healthState === 'err' ? '服务异常' : '检测中'">
+          {{ healthState === 'ok' ? '服务正常' : healthState === 'err' ? '服务异常' : '检测中' }}
+        </span>
+        <span class="health-text" :title="health" role="status">{{ health }}</span>
+        <button class="lab-btn ghost small" :disabled="healthState === 'loading'" @click="checkHealth">刷新</button>
       </div>
     </div>
 
@@ -178,7 +194,11 @@ npm run deploy:pages
           <thead><tr><th>路径</th><th>页面</th><th>说明</th></tr></thead>
           <tbody>
             <tr v-for="s in SITEMAP" :key="s.path">
-              <td><code>{{ s.path }}</code></td>
+              <td>
+                <!-- 站内页面可点击直达；接口与占位路径（…）保持纯文本 -->
+                <router-link v-if="!s.path.includes('.jpg') && !s.path.includes('…')" :to="s.path"><code>{{ s.path }}</code></router-link>
+                <code v-else>{{ s.path }}</code>
+              </td>
               <td><b>{{ s.name }}</b></td>
               <td>{{ s.note }}</td>
             </tr>
@@ -223,31 +243,15 @@ npm run deploy:pages
       </div>
     </section>
 
-    <!-- 部署指南 -->
+    <!-- 常见报错与教学案例 -->
     <section class="lab-card docs-sec">
-      <h3>4 · 部署指南</h3>
-      <div class="deploy-grid">
-        <div>
-          <h4>标准部署</h4>
-          <pre class="lab-code">{{ DEPLOY }}</pre>
-        </div>
-        <div>
-          <h4>内网离线部署</h4>
-          <pre class="lab-code">{{ DEPLOY_OFFLINE }}</pre>
-        </div>
-        <div>
-          <h4>开发模式（可省）</h4>
-          <pre class="lab-code">{{ DEPLOY_DEV }}</pre>
-        </div>
-        <div>
-          <h4>Cloudflare Workers / Pages</h4>
-          <pre class="lab-code">{{ DEPLOY_CF }}</pre>
-        </div>
-      </div>
-      <div class="lab-note info">
-        <span>自建部署要求 Node ≥ 18；服务器仅使用 Node 内置模块，<b>无需在部署机执行 npm install</b>。
-          构建产物位于 dist/。托管到 Cloudflare 时执行 <code>npm run deploy</code>（Workers）或
-          <code>npm run deploy:pages</code>（Pages），接口与 Node 版契约一致。</span>
+      <h3>4 · 常见报错与教学案例</h3>
+      <p class="sec-sub">这些「报错」都是精心设计的教学素材，碰到了先来这里对照，别急着改代码。</p>
+      <div v-for="e in ERRORS" :key="e.name" class="err-item">
+        <h4><code class="code-inline">{{ e.name }}</code> · {{ e.scene }}</h4>
+        <p class="err-when"><b>现象：</b>{{ e.when }}</p>
+        <p class="err-why"><b>原因：</b>{{ e.why }}</p>
+        <p class="err-how"><b>正确写法：</b>{{ e.how }}</p>
       </div>
     </section>
 
@@ -270,7 +274,10 @@ npm run deploy:pages
 .docs-head h2 { font-size: 24px; }
 .docs-sub { color: var(--lab-ink-3); font-size: 13.5px; margin: 6px 0 0; }
 .health-box { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--lab-line); padding: 8px 14px; border-radius: 10px; }
-.health-text { font-size: 12.5px; color: var(--lab-ink-2); }
+.health-text {
+  font-size: 12.5px; color: var(--lab-ink-2);
+  max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
 .docs-sec { padding: 22px; margin-bottom: 18px; }
 .docs-sec h3 { font-size: 18px; margin: 0 0 14px; }
@@ -278,14 +285,16 @@ npm run deploy:pages
 .sec-sub { font-size: 13px; color: var(--lab-ink-3); margin: 0 0 14px; }
 .table-scroll { overflow-x: auto; }
 
+.err-item { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px dashed var(--lab-line); }
+.err-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.err-item h4 { margin: 0 0 6px; font-size: 14px; }
+.err-item p { margin: 0 0 3px; font-size: 13px; color: var(--lab-ink-2); line-height: 1.7; word-break: break-word; }
 .api-item { margin-bottom: 18px; }
 .api-item:last-child { margin-bottom: 0; }
 .api-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .api-path { font-family: var(--lab-mono); font-size: 13.5px; font-weight: 700; color: #0f172a; }
 .api-desc { font-size: 13px; color: var(--lab-ink-2); margin: 0 0 8px; }
 .api-sample { font-size: 12px; }
-
-.deploy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
 
 .rule-list { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--lab-ink-2); }
 .rule-list li { margin-bottom: 8px; line-height: 1.75; }

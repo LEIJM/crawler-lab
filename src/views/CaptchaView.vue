@@ -6,7 +6,7 @@
  *   2. 人工识读后提交到 /api/captcha/verify 校验；
  *   3. 同时给出 requests 练习参考代码（学生可在 Jupyter 中复现）。
  */
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 const cid = ref('')
 const imgUrl = ref('')
@@ -15,23 +15,45 @@ const result = ref(null)   // null | true | false
 const loading = ref(false)
 const total = ref(0)
 const correct = ref(0)
+const fetchError = ref('')   // 接口失败提示（网络异常 / 服务未启动）
+
+// 正确率统计持久化到 localStorage，刷新不清零（课堂比拼场景）
+const STATS_KEY = 'captcha-stats'
+try {
+  const saved = JSON.parse(localStorage.getItem(STATS_KEY) || '{}')
+  if (typeof saved.total === 'number' && typeof saved.correct === 'number') {
+    total.value = saved.total
+    correct.value = saved.correct
+  }
+} catch { /* 存储不可用时保持默认 */ }
+function saveStats() {
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify({ total: total.value, correct: correct.value }))
+  } catch { /* 忽略 */ }
+}
 
 async function newCaptcha() {
   inputCode.value = ''
   result.value = null
+  fetchError.value = ''
   loading.value = true
   try {
     const res = await fetch('/api/captcha/new', { method: 'POST' })
+    if (!res.ok) throw new Error(`接口返回 ${res.status}`)
     const data = await res.json()
+    if (data.code !== 200) throw new Error(data.msg || '领取验证码失败')
     cid.value = data.data.cid
     imgUrl.value = data.data.url
+  } catch (e) {
+    fetchError.value = '验证码服务不可用：' + (e.message || '网络异常') + '。开发模式请确认 dev server 正常运行，生产部署请联系老师检查服务状态。'
   } finally {
     loading.value = false
   }
 }
 
 async function verify() {
-  if (!inputCode.value.trim() || !cid.value) return
+  if (loading.value || !inputCode.value.trim() || !cid.value) return
+  fetchError.value = ''
   loading.value = true
   try {
     const res = await fetch('/api/captcha/verify', {
@@ -39,10 +61,17 @@ async function verify() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cid: cid.value, code: inputCode.value.trim() })
     })
+    if (!res.ok) throw new Error(`接口返回 ${res.status}`)
     const data = await res.json()
+    if (data.code !== 200 || typeof data.data?.pass !== 'boolean') {
+      throw new Error(data.msg || '校验响应格式异常')
+    }
     result.value = data.data.pass
     total.value++
     if (data.data.pass) correct.value++
+    saveStats()
+  } catch (e) {
+    fetchError.value = '校验请求失败：' + (e.message || '网络异常')
   } finally {
     loading.value = false
   }
@@ -54,7 +83,7 @@ const PY_CODE = `import requests
 import matplotlib.pyplot as plt
 
 # 1. 领取一张验证码（返回 cid 与图片地址）
-base = 'http://SERVER:8188'
+base = 'https://crawler-lab.030516.xyz'
 r = requests.post(base + '/api/captcha/new').json()
 cid, url = r['data']['cid'], r['data']['url']
 print('cid =', cid)
@@ -73,7 +102,6 @@ res = requests.post(base + '/api/captcha/verify',
                     json={'cid': cid, 'code': code}).json()
 print('校验结果：', res['data']['pass'])`
 
-import { onMounted } from 'vue'
 onMounted(() => {
   document.title = '验证码练习 · Data221 实训站'
   newCaptcha()
@@ -93,18 +121,20 @@ onMounted(() => {
     <div class="cp-layout">
       <div class="lab-card cp-card">
         <div class="cp-img-area">
-          <img v-if="imgUrl" :src="imgUrl" alt="验证码图片" class="cp-img" @click="newCaptcha">
-          <div v-else class="cp-placeholder">点击下方按钮领取验证码</div>
+          <img v-if="imgUrl" :src="imgUrl" alt="验证码图片（点击可刷新）" class="cp-img" width="240" height="88"
+               @click="newCaptcha">
+          <div v-else class="cp-placeholder">{{ loading ? '正在获取验证码…' : '点击下方按钮领取验证码' }}</div>
         </div>
         <p class="cp-tip">看不清可点击图片或「换一张」刷新</p>
         <div class="cp-form">
           <input v-model="inputCode" class="cp-input" maxlength="4" placeholder="输入图中 4 位数字"
-                 @keydown.enter="verify">
+                 aria-label="验证码答案" @keydown.enter="verify">
           <button class="lab-btn" :disabled="loading || !cid" @click="verify">校验</button>
           <button class="lab-btn ghost" :disabled="loading" @click="newCaptcha">换一张</button>
         </div>
-        <p v-if="result === true" class="cp-result ok">✓ 识读正确！</p>
-        <p v-else-if="result === false" class="cp-result err">✗ 识读有误，再试一张吧</p>
+        <p v-if="fetchError" class="cp-result err" role="alert">{{ fetchError }}</p>
+        <p v-else-if="result === true" class="cp-result ok" role="status">✓ 识读正确！</p>
+        <p v-else-if="result === false" class="cp-result err" role="status">✗ 识读有误，再试一张吧</p>
         <div class="cp-stats">
           <span>累计练习：{{ total }} 次</span>
           <span>正确：{{ correct }} 次</span>
@@ -117,8 +147,9 @@ onMounted(() => {
         <p class="cp-code-hint">在 Jupyter 中运行（把 SERVER 换成实训站地址），即可复现 notebook 的验证码识读流程：</p>
         <pre class="lab-code">{{ PY_CODE }}</pre>
         <div class="lab-note info" style="margin-top:14px;">
-          <span>登录页（/login）的验证码走 <b>Session</b>（RYSESSID Cookie），必须用 requests.Session() 才能校验成功；
-            本练习页走 <b>cid</b> 机制，两者都源自 /kaptcha.jpg 图像服务。</span>
+          <span>登录页（<router-link to="/login">/login</router-link>）的验证码走 <b>Session</b>（RYSESSID Cookie），
+            必须用 requests.Session() 才能校验成功；本练习页走 <b>cid</b> 机制，两者都源自 /kaptcha.jpg 图像服务。
+            下一步建议：去登录页用 requests.Session() 完整走一遍「取验证码 → 提交登录」流程。</span>
         </div>
       </div>
     </div>

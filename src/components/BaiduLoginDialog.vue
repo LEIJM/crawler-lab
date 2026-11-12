@@ -9,7 +9,7 @@
  *   #TANGRAM__PSP_11__submit     登录提交按钮
  *   #TANGRAM__PSP_11__error      错误提示区域
  */
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { baiduUI, refreshBaiduUser } from '../lib/baidu-ui.js'
 
 const props = defineProps({ modelValue: Boolean })
@@ -20,11 +20,32 @@ const password = ref('')
 const agreed = ref(false)
 const errorMsg = ref('')
 const submitting = ref(false)
+const userNameInput = ref(null)
+const dialogEl = ref(null)
+
+/* 简易 Tab 焦点陷阱：Tab 到最后一个可聚焦元素后回到第一个，Shift+Tab 反向 */
+function trapFocus(e) {
+  if (e.key !== 'Tab' || !dialogEl.value) return
+  const focusables = dialogEl.value.querySelectorAll(
+    'input:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )
+  if (!focusables.length) return
+  const first = focusables[0]
+  const last = focusables[focusables.length - 1]
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault()
+    last.focus()
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault()
+    first.focus()
+  }
+}
 
 watch(() => props.modelValue, (v) => {
   if (v) {
     errorMsg.value = ''
-    // 打开时清空错误，保留已输入内容便于重试
+    // 打开时清空错误，保留已输入内容便于重试；聚焦用户名框（键盘/读屏可达性）
+    nextTick(() => userNameInput.value?.focus())
   }
 })
 
@@ -71,8 +92,9 @@ async function submit() {
 </script>
 
 <template>
-  <div v-if="modelValue" class="tangram-mask" @click.self="close">
-    <div class="tangram-dialog" role="dialog" aria-label="百度帐号登录">
+  <div v-if="modelValue" class="tangram-mask" @click.self="close" @keydown.esc="close">
+    <div ref="dialogEl" class="tangram-dialog" role="dialog" aria-modal="true"
+         aria-label="百度帐号登录" @keydown="trapFocus">
       <div class="tangram-head">
         <p class="tangram-title">登录百度帐号</p>
         <button class="tangram-close" aria-label="关闭" @click="close">×</button>
@@ -80,10 +102,12 @@ async function submit() {
 
       <div class="tangram-body">
         <div class="tangram-row">
-          <input id="TANGRAM__PSP_11__userName" v-model="username" type="text" placeholder="手机号/用户名" autocomplete="off">
+          <input id="TANGRAM__PSP_11__userName" ref="userNameInput" v-model="username" type="text"
+                 aria-label="用户名" placeholder="手机号/用户名" autocomplete="off">
         </div>
         <div class="tangram-row">
-          <input id="TANGRAM__PSP_11__password" v-model="password" type="password" placeholder="密码" autocomplete="off">
+          <input id="TANGRAM__PSP_11__password" v-model="password" type="password"
+                 aria-label="密码" placeholder="密码" autocomplete="off">
         </div>
 
         <p id="TANGRAM__PSP_11__error" class="tangram-error" :class="{ show: errorMsg }">{{ errorMsg || ' ' }}</p>
@@ -94,12 +118,16 @@ async function submit() {
             class="agree-checkbox"
             :class="{ checked: agreed }"
             role="checkbox"
+            aria-label="阅读并接受《百度用户协议》及《隐私权保护声明》"
             :aria-checked="agreed"
             tabindex="0"
             @click="agreed = !agreed"
             @keydown.enter.prevent="agreed = !agreed"
+            @keydown.space.prevent="agreed = !agreed"
           ></span>
-          <label class="agree-label" for="TANGRAM__PSP_11__isAgree">阅读并接受<a href="javascript:;">《百度用户协议》</a>及<a href="javascript:;">《隐私权保护声明》</a></label>
+          <!-- label for 指向的 span 非 labelable，原生点击不触发：补 @click 联动 -->
+          <label class="agree-label" for="TANGRAM__PSP_11__isAgree"
+                 @click.prevent="agreed = !agreed">阅读并接受<a href="javascript:;">《百度用户协议》</a>及<a href="javascript:;">《隐私权保护声明》</a></label>
         </div>
 
         <button id="TANGRAM__PSP_11__submit" class="tangram-submit" :disabled="submitting" @click="submit">
@@ -219,7 +247,7 @@ async function submit() {
 .tangram-hint {
   margin: 12px 0 0;
   text-align: center;
-  font-size: 12px;
-  color: #a6adb4;
+  font-size: 13px;
+  color: #5f6b7a; /* 教学账号提示：学生找不到账号会卡住，对比度必须达标 */
 }
 </style>

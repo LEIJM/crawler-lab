@@ -5,6 +5,9 @@
  */
 import { onMounted } from 'vue'
 
+// 首屏统计口径（与 DocsView 站点地图 / APIS 表保持一致，避免数字漂移）：
+// 功能页面 12 个（含 /docs 自身），接口 8 个（kaptcha.jpg、login、baidu/login、
+// captcha/new、captcha/verify、challenge/check、challenge/secret、health）
 const SITES = [
   {
     key: 'baidu',
@@ -12,9 +15,9 @@ const SITES = [
     desc: '复刻百度首页与结果页的定位契约（#kw / #su / h3.t / #page 分页），并内置登录弹窗与 Cookie 登录态。',
     accent: '#4e6ef2',
     pages: [
-      { path: '/baidu', label: '百度首页', code: 'driver.get(\'http://SERVER:8188/baidu\')' },
+      { path: '/baidu', label: '百度首页', code: 'driver.get(\'https://crawler-lab.030516.xyz/baidu\')' },
       { path: '/s?wd=%E8%BD%AC%E6%9C%AC&pn=0', label: '搜索结果页', code: '标题=“转本_百度搜索”，h3.t 结构' },
-      { path: '/docs', label: '使用文档', code: '账号 student/123456' }
+      { path: '/baidu', label: '登录弹窗', code: '#TANGRAM__PSP_11__userName / password / isAgree / submit' }
     ]
   },
   {
@@ -31,10 +34,10 @@ const SITES = [
 ]
 
 const TOOLS = [
-  { path: '/playground', icon: '⌘', name: '选择器练习场', desc: '在线试写 CSS / XPath 选择器，实时高亮命中元素，notebook 全部选择器可一键验证。' },
+  { path: '/playground', icon: '⌘', name: '选择器练习场', desc: '在线试写 CSS / XPath 选择器，实时高亮命中元素，notebook 关键选择器速查可一键试跑。' },
   { path: '/challenge', icon: '⚔', name: '爬虫闯关（6 关）', desc: '静态列表 → 异步加载 → 点击展开 → 分页表格 → 数据解码 → 请求头反爬，逐级通关。' },
   { path: '/captcha', icon: '🔑', name: '验证码识读练习', desc: '无限刷新验证码图片并即时校验，配合 notebook「识别验证码」环节练手。' },
-  { path: '/docs', icon: '📖', name: '教学文档', desc: '页面地图、API 契约、教学账号、部署指南与合规说明，教师备课与学生自学通用。' }
+  { path: '/docs', icon: '📖', name: '教学文档', desc: '页面地图、API 契约、教学账号、常见报错与合规说明，教师备课与学生自学通用。' }
 ]
 
 const CELLS = [
@@ -42,7 +45,7 @@ const CELLS = [
     cell: '单元格 0',
     topic: '百度搜索与翻页爬取',
     original: 'https://www.baidu.com/',
-    replace: 'http://SERVER:8188/baidu',
+    replace: 'https://crawler-lab.030516.xyz/baidu',
     selector: '#kw、#su、h3.t、#page > div 内 a[last()]',
     task: '定位搜索框输入「转本」，点击搜索，等待标题出现后循环抓取 h3.t 文本并点击下一页'
   },
@@ -50,7 +53,7 @@ const CELLS = [
     cell: '单元格 2',
     topic: '人邮书城图书搜索',
     original: 'https://www.ptpress.com.cn/shopping/index',
-    replace: 'http://SERVER:8188/shopping/index（仅换域名）',
+    replace: 'https://crawler-lab.030516.xyz/shopping/index（仅换域名）',
     selector: '//*[@id="header"]/div[1]/div/div[2]/div[3]/input 与 button',
     task: '输入「大数据」→ 搜索 → 切换新窗口 → BeautifulSoup 抓取 .book_item > a > p 书名'
   },
@@ -58,7 +61,7 @@ const CELLS = [
     cell: '单元格 4/5',
     topic: '识别验证码',
     original: 'https://www.ptpress.com.cn/kaptcha.jpg',
-    replace: 'http://SERVER:8188/kaptcha.jpg（仅换域名）',
+    replace: 'https://crawler-lab.030516.xyz/kaptcha.jpg（仅换域名）',
     selector: 'requests 下载 + plt.imread 展示 + input 人工识读',
     task: '下载验证码图片，matplotlib 显示后人工输入；本站验证码为 4 位数字 PNG'
   },
@@ -66,7 +69,7 @@ const CELLS = [
     cell: '单元格 8',
     topic: '模拟登录（提交表单）',
     original: 'POST https://www.ptpress.com.cn/login',
-    replace: 'POST http://SERVER:8188/login（仅换域名）',
+    replace: 'POST https://crawler-lab.030516.xyz/login（仅换域名）',
     selector: 'sess.post(url, data={username, password, verifyCode})',
     task: '用 requests.Session 保持验证码会话并提交登录，观察返回 JSON 与 Set-Cookie'
   },
@@ -74,7 +77,7 @@ const CELLS = [
     cell: '单元格 10',
     topic: 'Selenium 自动化提交表单',
     original: 'https://www.ptpress.com.cn/login',
-    replace: 'http://SERVER:8188/login（仅换域名）',
+    replace: 'https://crawler-lab.030516.xyz/login（仅换域名）',
     selector: '#loginForm/div[1]/input、div[2]/input、div[3]/div[1]/div/input、.verCodeImg、#loginBtn',
     task: '自动填写用户名密码 → 截取验证码元素 → 人工输入 → 点击登录'
   },
@@ -82,7 +85,7 @@ const CELLS = [
     cell: '单元格 12',
     topic: '百度自动化登录表单',
     original: 'https://www.baidu.com/',
-    replace: 'http://SERVER:8188/baidu',
+    replace: 'https://crawler-lab.030516.xyz/baidu',
     selector: '#s-top-loginbtn、#TANGRAM__PSP_11__userName / password / isAgree / submit',
     task: '点击登录 → 填写账号（student/123456）→ 勾选协议 → 提交，观察 BDUSS Cookie'
   },
@@ -90,7 +93,7 @@ const CELLS = [
     cell: '单元格 14',
     topic: '百度 Cookies 登录',
     original: 'https://www.baidu.com/',
-    replace: 'http://SERVER:8188/baidu',
+    replace: 'https://crawler-lab.030516.xyz/baidu',
     selector: 'driver.add_cookie({name:"BAIDUID"...})、{name:"BDUSS"...}',
     task: '未登录打开首页 → 注入两个 Cookie → 刷新后右上角显示登录态'
   }
@@ -119,8 +122,8 @@ onMounted(() => {
             <router-link class="lab-btn ghost" to="/playground">先练选择器</router-link>
           </div>
           <div class="hero-stats">
-            <div class="stat"><b>11</b><span>功能页面</span></div>
-            <div class="stat"><b>7</b><span>后端接口</span></div>
+            <div class="stat"><b>12</b><span>功能页面</span></div>
+            <div class="stat"><b>8</b><span>后端接口</span></div>
             <div class="stat"><b>6</b><span>闯关关卡</span></div>
             <div class="stat"><b>0</b><span>外部依赖</span></div>
           </div>
@@ -134,7 +137,7 @@ onMounted(() => {
 
 driver = webdriver.Chrome()
 <span class="c1"># 原来是 https://www.baidu.com/</span>
-driver.get(<span class="s">'http://SERVER:8188/baidu'</span>)
+driver.get(<span class="s">'https://crawler-lab.030516.xyz/baidu'</span>)
 
 driver.find_element(By.XPATH,
     <span class="s">'//*[@id="kw"]'</span>).send_keys(<span class="s">'转本'</span>)
@@ -158,8 +161,10 @@ driver.find_element(By.XPATH,
             <span class="step-no">1</span>
             <h3>替换 URL</h3>
             <p>把 notebook 中 <code class="code-inline">https://www.baidu.com/</code> 换成
-              <code class="code-inline">http://SERVER:8188/baidu</code>；人邮相关仅替换域名为
-              <code class="code-inline">http://SERVER:8188</code>，路径保持不变。</p>
+              <code class="code-inline">https://crawler-lab.030516.xyz/baidu</code>；人邮相关仅替换域名为
+              <code class="code-inline">https://crawler-lab.030516.xyz</code>，路径保持不变。</p>
+            <p class="step-note"><b>SERVER</b> 是占位符 = 本站部署地址：本地运行为
+              <code class="code-inline">localhost</code>，教室环境以老师公告的 IP/域名为准。</p>
           </div>
           <div class="lab-card step-card">
             <span class="step-no">2</span>
@@ -193,7 +198,8 @@ driver.find_element(By.XPATH,
             </div>
             <p class="site-desc">{{ s.desc }}</p>
             <ul class="site-pages">
-              <li v-for="p in s.pages" :key="p.path">
+              <!-- key 用 path+label：同一站点下不同条目可能同 path（如 /baidu 首页与登录弹窗） -->
+              <li v-for="p in s.pages" :key="p.path + '|' + p.label">
                 <router-link :to="p.path">{{ p.label }}</router-link>
                 <code>{{ p.code }}</code>
               </li>
@@ -345,7 +351,8 @@ driver.find_element(By.XPATH,
   margin-bottom: 12px;
 }
 .step-card h3 { font-size: 16px; margin-bottom: 8px; }
-.step-card p { color: var(--lab-ink-2); font-size: 13.5px; margin: 0; }
+.step-card p { color: var(--lab-ink-2); font-size: 13.5px; margin: 0 0 6px; }
+.step-note { font-size: 12.5px; color: #5f6b7a; background: #f8fafc; border-left: 3px solid var(--lab-blue); padding: 6px 10px; border-radius: 0 6px 6px 0; }
 
 /* 站点卡 */
 .site-card { padding: 22px; }

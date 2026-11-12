@@ -5,10 +5,11 @@
  * DOM 契约（对应 notebook 单元格 0）：
  *   标题设为 `{wd}_百度搜索`       → WebDriverWait(title_contains("转本")) 通过
  *   结果以 <h3 class="t"> 呈现      → driver.find_elements(By.CSS_SELECTOR, 'h3.t')
- *   #page > div 内：strong=当前页码、a=其他页码、a[last()]="下一页>"
+ *   #page > div 内：strong=当前页码、a=其他页码、a[last()]="下一页>"（第 1~9 页）
  *     → driver.find_element(By.XPATH, '//*[@id="page"]/div/a[last()]')
- *   最后一页不再出现「下一页」，复刻真实站点行为：
- *     循环点击翻页最终会抛 NoSuchElementException，是课堂讲解异常终止的好案例。
+ *   末页（第 10 页）「下一页」消失，a[last()] 命中的是「上一页」——
+ *     盲目循环点击会陷入 9↔10 往返而非抛异常；这是讲解「循环终止条件」的实战案例：
+ *     翻页前应先判断是否存在「下一页」（find_elements 检查或断当前页码）。
  */
 import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -63,7 +64,8 @@ watch(() => route.fullPath, () => {
         <a class="s-logo" href="/baidu" @click.prevent="goSearchBox">百度</a>
         <form class="s-searchform" @submit.prevent="goSearchBox">
           <span class="s-box">
-            <input id="kw" class="s_ipt" type="text" name="wd" :value="wd" @keydown.enter.prevent="goSearchBox">
+            <input id="kw" class="s_ipt" type="text" name="wd" :value="wd" aria-label="搜索关键词"
+                   @keydown.enter.prevent="goSearchBox">
             <input id="su" class="btn" type="submit" value="百度一下">
           </span>
         </form>
@@ -76,8 +78,9 @@ watch(() => route.fullPath, () => {
       </div>
     </div>
 
-    <!-- 结果区 -->
-    <div class="s-result-wrap">
+    <!-- 结果区（补 sr-only h1：h3.t 是契约不可改，页面本身缺 h1） -->
+    <main class="s-result-wrap">
+      <h1 class="sr-only">{{ wd }}_百度搜索</h1>
       <div class="s-results">
         <p class="s-tips">百度为您找到相关结果约 {{ 100000 + wd.length * 77 }} 个（教学模拟数据）</p>
 
@@ -93,7 +96,8 @@ watch(() => route.fullPath, () => {
         <div class="page-inner">
           <a v-if="page > 1" class="n" :href="`/s?wd=${encodeURIComponent(wd)}&pn=${(page - 2) * PER_PAGE}`"
              @click.prevent="router.push(pageHref(page - 1))">上一页&lt;</a>
-          <strong>{{ page }}</strong>
+          <!-- 契约要求 strong=当前页码：仅补 aria-current，不改标签 -->
+          <strong aria-current="page">{{ page }}</strong>
           <a v-for="p in pageNums" :key="p" :href="`/s?wd=${encodeURIComponent(wd)}&pn=${(p - 1) * PER_PAGE}`"
              @click.prevent="router.push(pageHref(p))">{{ p }}</a>
           <a v-if="page < MAX_PAGES" class="n" :href="`/s?wd=${encodeURIComponent(wd)}&pn=${page * PER_PAGE}`"
@@ -103,10 +107,11 @@ watch(() => route.fullPath, () => {
 
       <p class="s-teach-tip">
         教学提示：结果项为 <code class="code-inline">h3.t</code> 结构；翻页使用
-        <code class="code-inline">//*[@id="page"]/div/a[last()]</code> 定位「下一页」，
-        第 {{ MAX_PAGES }} 页后该元素消失，可用来演示 NoSuchElementException。
+        <code class="code-inline">//*[@id="page"]/div/a[last()]</code> 定位「下一页」。
+        注意：第 {{ MAX_PAGES }} 页「下一页」<b>消失</b>，此时 <code class="code-inline">a[last()]</code>
+        命中的是「上一页」——盲目循环会陷入往返，请先判断「下一页」是否存在再点击。
       </p>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -254,8 +259,8 @@ watch(() => route.fullPath, () => {
 }
 .s-teach-tip {
   margin-top: 20px;
-  font-size: 12px;
-  color: #9aa0a6;
+  font-size: 13px;
+  color: #5f6b7a; /* 对比度 ≥ 4.5:1（原 #9aa0a6 约 2.7:1） */
   line-height: 1.8;
   max-width: 630px;
 }

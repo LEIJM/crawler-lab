@@ -81,6 +81,7 @@ watchEffect(() => {
             </div>
             <div class="h-search">
               <input v-model="keyword" type="text" class="search-input" name="keyword"
+                     aria-label="搜索书名 / 作者 / 关键词"
                      placeholder="请输入书名 / 作者 / 关键词">
               <button class="search-btn" type="button" @click="doSearch">搜索</button>
             </div>
@@ -169,9 +170,9 @@ watchEffect(() => {
 .book_grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
 @media (max-width: 1100px) { .book_grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .book_grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.empty-box { text-align: center; padding: 70px 0; color: #888; background: #fff; border-radius: 10px; }
+.empty-box { text-align: center; padding: 70px 0; color: #5f6b7a; background: #fff; border-radius: 10px; }
 .empty-icon { font-size: 40px; margin: 0 0 10px; }
-.empty-sub { color: #aaa; font-size: 13px; margin-top: 6px; }
+.empty-sub { color: #5f6b7a; font-size: 13px; margin-top: 6px; }
 .search-pager { display: flex; gap: 8px; justify-content: center; margin: 28px 0 8px; flex-wrap: wrap; }
 .search-pager a {
   padding: 6px 14px; border: 1px solid #e5e5e5; border-radius: 6px; background: #fff;
@@ -181,7 +182,7 @@ watchEffect(() => {
 .search-pager a.cur { background: #e60012; color: #fff; border-color: #e60012; }
 .pt-teach {
   margin-top: 20px; padding: 10px 14px; background: #fff; border: 1px dashed #d9d9d9;
-  border-radius: 8px; font-size: 12px; color: #888; line-height: 1.9;
+  border-radius: 8px; font-size: 13px; color: #5f6b7a; line-height: 1.9;
 }
 .pt-footer { margin-top: auto; background: #2a2a2a; color: #bbb; text-align: center; padding: 22px 16px; font-size: 12.5px; }
 </style>

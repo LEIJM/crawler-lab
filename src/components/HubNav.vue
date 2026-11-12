@@ -73,11 +73,10 @@ const links = [
 }
 .brand-badge {
   font-size: 11px;
-  color: var(--lab-ink-3);
   border: 1px dashed #cbd5e1;
   border-radius: 999px;
   padding: 1px 8px;
-  color: #64748b;
+  color: #64748b; /* 复审 #1 清理：删去重复的 var(--lab-ink-3) color 声明 */
 }
 .nav-links {
   display: flex;
@@ -99,6 +98,10 @@ const links = [
 }
 @media (max-width: 720px) {
   .brand-text { display: none; }
-  .nav-link { padding: 7px 10px; font-size: 13px; }
+  .nav-link { padding: 7px 10px; font-size: 13px; flex: 0 0 auto; }
+  /* 窄屏：导航允许横向滚动而非溢出/换行挤压 */
+  .nav-inner { flex-wrap: nowrap; }
+  .nav-links { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .nav-links::-webkit-scrollbar { display: none; }
 }
 </style>

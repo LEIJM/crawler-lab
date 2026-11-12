@@ -49,13 +49,13 @@ npm run deploy:pages        # Pages：构建 dist/，上传静态资源并启用
 
 | notebook 单元格 | 原地址 | 替换为 |
 |---|---|---|
-| 单元格 0 百度搜索爬取 | `https://www.baidu.com/` | `http://SERVER:8188/baidu` |
-| 单元格 2 人邮书城搜索 | `https://www.ptpress.com.cn/shopping/index` | `http://SERVER:8188/shopping/index`（仅换域名） |
-| 单元格 4/5 识别验证码 | `https://www.ptpress.com.cn/kaptcha.jpg` | `http://SERVER:8188/kaptcha.jpg`（仅换域名） |
-| 单元格 8 模拟登录 | `POST https://www.ptpress.com.cn/login` | `POST http://SERVER:8188/login`（仅换域名） |
-| 单元格 10 自动化提交表单 | `https://www.ptpress.com.cn/login` | `http://SERVER:8188/login`（仅换域名） |
-| 单元格 12 百度自动化表单 | `https://www.baidu.com/` | `http://SERVER:8188/baidu` |
-| 单元格 14 百度 Cookies 登录 | `https://www.baidu.com/` | `http://SERVER:8188/baidu` |
+| 单元格 0 百度搜索爬取 | `https://www.baidu.com/` | `https://crawler-lab.030516.xyz/baidu` |
+| 单元格 2 人邮书城搜索 | `https://www.ptpress.com.cn/shopping/index` | `https://crawler-lab.030516.xyz/shopping/index`（仅换域名） |
+| 单元格 4/5 识别验证码 | `https://www.ptpress.com.cn/kaptcha.jpg` | `https://crawler-lab.030516.xyz/kaptcha.jpg`（仅换域名） |
+| 单元格 8 模拟登录 | `POST https://www.ptpress.com.cn/login` | `POST https://crawler-lab.030516.xyz/login`（仅换域名） |
+| 单元格 10 自动化提交表单 | `https://www.ptpress.com.cn/login` | `https://crawler-lab.030516.xyz/login`（仅换域名） |
+| 单元格 12 百度自动化表单 | `https://www.baidu.com/` | `https://crawler-lab.030516.xyz/baidu` |
+| 单元格 14 百度 Cookies 登录 | `https://www.baidu.com/` | `https://crawler-lab.030516.xyz/baidu` |
 
 **教学账号**（模拟站公开账号）：
 
@@ -85,12 +85,12 @@ h3.t                      百度结果标题       By.CSS_SELECTOR 'h3.t'
 ## 功能页面一览
 
 - `/` 总领页（课程导航 + 对照表 + 快速开始）
-- `/baidu`、`/s?wd=xx&pn=0` 伪百度首页 / 结果页（10 页结果、末页无"下一页"→ 可演示 NoSuchElementException）
+- `/baidu`、`/s?wd=xx&pn=0` 伪百度首页 / 结果页（10 页结果、末页无"下一页"→ 注意末页 `a[last()]` 命中的是"上一页"，盲目循环会陷入往返；正确写法是先 `find_elements` 检查"下一页"是否存在）
 - `/shopping/index`、`/search?keyword=xx&jc=`、`/shopping/detail?isbn=xx`、`/login` 伪人邮书城
 - `/playground` 选择器练习场（CSS / XPath 实时高亮验证）
 - `/challenge` 爬虫闯关 6 关（静态 → 异步 → 点击 → 翻页 → 解码 → 请求头反爬；答案存服务端）
 - `/captcha` 验证码识读练习（cid 机制，可反复刷、即时校验、正确率统计）
-- `/docs` 教学文档（站点地图 / 账号 / API 契约 / 部署 / 合规）
+- `/docs` 教学文档（站点地图 / 账号 / API 契约 / 常见报错 / 合规；部署指南见本 README）
 
 ## 技术说明
 

@@ -106,7 +106,8 @@ onMounted(() => {
             </div>
             <div class="h-notice"><span class="notice-bar">登录后可享受教材征订、样书申请等服务</span></div>
             <div class="h-search">
-              <input type="text" class="search-input" placeholder="请输入书名 / 作者 / 关键词">
+              <input type="text" class="search-input" aria-label="搜索书名 / 作者 / 关键词"
+                     placeholder="请输入书名 / 作者 / 关键词">
               <button class="search-btn" type="button" @click="openSearch">搜索</button>
             </div>
           </div>
@@ -140,16 +141,17 @@ onMounted(() => {
                 <input id="verifyCode" v-model="verifyCode" class="row-input code-input-el" type="text"
                        name="verifyCode" maxlength="4" placeholder="验证码" autocomplete="off">
               </div>
-              <img class="verCodeImg" :src="captchaSrc" alt="验证码，点击图片可刷新"
+              <img class="verCodeImg" :src="captchaSrc" alt="验证码，点击图片可刷新" width="120" height="44"
                    title="看不清？点击图片刷新" @click="refreshCaptcha">
             </div>
             <p class="code-tip">看不清？点击图片刷新</p>
           </div>
 
-          <button id="loginBtn" class="login-btn" type="button" :disabled="loading" @click="submitLogin">
+          <!-- 改 type="submit"：密码框回车可提交（DOM 契约仅约束 #loginBtn 的 id） -->
+          <button id="loginBtn" class="login-btn" type="submit" :disabled="loading">
             {{ loading ? '登录中…' : '登 录' }}
           </button>
-          <p id="loginMsg" class="login-msg" :class="msgType">{{ msg || ' ' }}</p>
+          <p id="loginMsg" class="login-msg" :class="msgType" role="status">{{ msg || ' ' }}</p>
         </form>
 
         <div class="login-accounts">
@@ -286,8 +288,8 @@ onMounted(() => {
 
 .login-teacher-tip {
   margin-top: 14px;
-  font-size: 12px;
-  color: #888;
+  font-size: 13px;
+  color: #5f6b7a; /* Selenium 练习提示：对比度 ≥ 4.5:1（原 #888 约 3.5:1） */
   line-height: 1.9;
   border-top: 1px solid #f0f0f0;
   padding-top: 12px;

@@ -3,7 +3,7 @@
  * 图书详情页（/shopping/detail?isbn=xxx）
  * 提供更深的爬取目标：出版信息、价格、目录等结构化数据。
  */
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import BookCard from '../components/BookCard.vue'
 import { BOOKS, findBook, coverGradient } from '../data/books.js'
@@ -20,6 +20,12 @@ const toc = computed(() => {
   const names = ['基础认知', '核心原理', '关键技术', '项目实战', '进阶拓展', '综合实训', '课程思政与延伸阅读', '附录与习题参考答案']
   return names.map((n, i) => `第${i + 1}章　${n}`)
 })
+
+// P2 优化：交互反馈改内联提示（原 window.alert 中断式弹窗与全站风格断裂）
+const actMsg = ref('')
+function mockAction(action) {
+  actMsg.value = `「${action}」为教学演示：本站未实现下单功能，仅提供页面结构供爬虫练习。`
+}
 
 onMounted(() => {
   document.title = book.value ? `${book.value.title} - 人民邮电出版社` : '图书未找到 - 人民邮电出版社'
@@ -49,8 +55,9 @@ onMounted(() => {
             </div>
             <div class="h-notice"><span class="notice-bar">详情页数据均为教学模拟数据</span></div>
             <div class="h-search">
-              <input type="text" class="search-input" placeholder="请输入书名 / 作者 / 关键词">
-              <button class="search-btn" type="button" disabled>搜索</button>
+              <input type="text" class="search-input search-input--dead" placeholder="详情页不支持搜索，请返回首页"
+                     aria-label="搜索框（详情页未启用）" tabindex="-1">
+              <button class="search-btn" type="button" disabled aria-disabled="true">搜索</button>
             </div>
           </div>
         </div>
@@ -73,9 +80,10 @@ onMounted(() => {
           <p class="d-price">￥<span class="d-price-num">{{ book.price.toFixed(2) }}</span></p>
           <p class="d-intro">{{ book.intro }}</p>
           <div class="d-acts">
-            <button class="buy-btn" type="button" @click="alert('教学模拟站点，未实现下单功能')">加入购物车</button>
-            <button class="cart-btn" type="button" @click="alert('教学模拟站点，未实现下单功能')">立即购买</button>
+            <button class="buy-btn" type="button" @click="mockAction('加入购物车')">加入购物车</button>
+            <button class="cart-btn" type="button" @click="mockAction('立即购买')">立即购买</button>
           </div>
+          <p v-if="actMsg" class="act-msg" role="status">{{ actMsg }}</p>
         </div>
       </div>
 
@@ -151,6 +159,8 @@ onMounted(() => {
 .d-acts { margin-top: 20px; display: flex; gap: 12px; }
 .buy-btn { background: #ff7a00; color: #fff; padding: 11px 30px; border-radius: 8px; font-size: 15px; font-weight: 600; }
 .cart-btn { background: #e60012; color: #fff; padding: 11px 30px; border-radius: 8px; font-size: 15px; font-weight: 600; }
+.act-msg { margin: 10px 0 0; font-size: 12.5px; color: #5f6b7a; background: #fff7f7; border: 1px dashed #f5b5b5; border-radius: 6px; padding: 6px 10px; }
+.search-input--dead { border-color: #d9d9d9; color: #aaa; }
 .d-section { margin-top: 26px; background: #fff; border-radius: 12px; padding: 20px 26px; }
 .d-sec-title { font-size: 17px; margin: 0 0 12px; color: #222; border-left: 4px solid #e60012; padding-left: 10px; }
 .d-text { font-size: 14px; color: #555; line-height: 1.9; margin: 0; }

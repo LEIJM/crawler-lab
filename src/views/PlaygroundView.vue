@@ -14,15 +14,17 @@ const matchedCount = ref(0)
 const queryError = ref('')
 const lastRun = ref('')
 
+// note 标明选择器目标元素的位置：本页可试 / 需到对应模拟站点页验证
+// （P0 修复：此前部分预置在本页命中 0 个，学生误以为自己操作错了）
 const PRESETS = [
-  { mode: 'css', label: 'h3.t（百度结果标题）', sel: 'h3.t' },
-  { mode: 'css', label: '.book_item > a > p（书名）', sel: '.book_item > a > p' },
-  { mode: 'xpath', label: '//*[@id="kw"]（百度搜索框）', sel: '//*[@id="kw"]' },
-  { mode: 'xpath', label: '//*[@id="page"]/div/a[last()]（下一页）', sel: '//*[@id="page"]/div/a[last()]' },
-  { mode: 'xpath', label: '//*[@id="header"]/div[1]/div/div[2]/div[3]/input', sel: '//*[@id="header"]/div[1]/div/div[2]/div[3]/input' },
-  { mode: 'xpath', label: '//*[@id="loginForm"]/div[1]/input', sel: '//*[@id="loginForm"]/div[1]/input' },
-  { mode: 'css', label: '.verCodeImg（验证码图）', sel: '.verCodeImg' },
-  { mode: 'xpath', label: '//li[contains(@class,"hot")]//a', sel: '//li[contains(@class,"hot")]//a' }
+  { mode: 'css', label: 'h3.t（百度结果标题）', sel: 'h3.t', note: '→ /s 结果页验证' },
+  { mode: 'css', label: '.book_item > a > p（书名）', sel: '.book_item > a > p', note: '本页可试' },
+  { mode: 'xpath', label: '//*[@id="kw"]（百度搜索框）', sel: '//*[@id="kw"]', note: '→ /baidu 页验证' },
+  { mode: 'xpath', label: '//*[@id="page"]/div/a[last()]（下一页）', sel: '//*[@id="page"]/div/a[last()]', note: '本页可试' },
+  { mode: 'xpath', label: '//*[@id="header"]/div[1]/div/div[2]/div[3]/input', sel: '//*[@id="header"]/div[1]/div/div[2]/div[3]/input', note: '→ /shopping/index 页验证' },
+  { mode: 'xpath', label: '//*[@id="loginForm"]/div[1]/input', sel: '//*[@id="loginForm"]/div[1]/input', note: '→ /login 页验证' },
+  { mode: 'css', label: '.verCodeImg（验证码图）', sel: '.verCodeImg', note: '→ /login 页验证' },
+  { mode: 'xpath', label: '//li[contains(@class,"hot")]//a', sel: '//li[contains(@class,"hot")]//a', note: '本页可试' }
 ]
 
 const NEWS = [
@@ -55,6 +57,14 @@ function clearHighlight() {
   })
 }
 
+function clearAll() {
+  clearHighlight()
+  matchedCount.value = 0
+  matchedTexts.value = []
+  lastRun.value = ''
+  queryError.value = ''
+}
+
 function runQuery() {
   queryError.value = ''
   matchedTexts.value = []
@@ -81,7 +91,10 @@ function runQuery() {
   }
 
   matchedCount.value = elements.length
-  matchedTexts.value = elements.slice(0, 30).map((el) => {
+  // P0 修复：命中 0 时给出解释而非空白，避免学生误判为自己操作错误
+  matchedTexts.value = elements.length === 0
+    ? ['本页未命中。该选择器的目标元素可能位于对应模拟站点页（如 /baidu、/login、/s），请按预置标注前往实际页面验证。']
+    : elements.slice(0, 30).map((el) => {
     const t = (el.textContent || '').replace(/\s+/g, ' ').trim()
     return t.length > 46 ? t.slice(0, 46) + '…' : t
   })
@@ -197,15 +210,16 @@ const sampleResults = computed(() => [
       <div class="pg-panel">
         <div class="lab-card pg-query-card">
           <div class="mode-switch">
-            <button :class="{ on: mode === 'css' }" @click="mode = 'css'">CSS 选择器</button>
-            <button :class="{ on: mode === 'xpath' }" @click="mode = 'xpath'">XPath</button>
+            <button :class="{ on: mode === 'css' }" :aria-pressed="mode === 'css'" @click="mode = 'css'">CSS 选择器</button>
+            <button :class="{ on: mode === 'xpath' }" :aria-pressed="mode === 'xpath'" @click="mode = 'xpath'">XPath</button>
           </div>
           <textarea v-model="selector" class="pg-input" rows="3" spellcheck="false"
+                    aria-label="CSS 或 XPath 选择器输入"
                     :placeholder="mode === 'css' ? '如：.book_item > a > p' : '如：//*[@id=&quot;kw&quot;]'"
                     @keydown.ctrl.enter="runQuery"></textarea>
           <div class="pg-actions">
             <button class="lab-btn" @click="runQuery">运行查询（Ctrl+Enter）</button>
-            <button class="lab-btn ghost" @click="() => { clearHighlight(); matchedCount = 0; matchedTexts = []; }">清除高亮</button>
+            <button class="lab-btn ghost" @click="clearAll">清除高亮</button>
           </div>
 
           <p v-if="queryError" class="pg-error">{{ queryError }}</p>
@@ -219,23 +233,33 @@ const sampleResults = computed(() => [
 
         <div class="lab-card pg-preset-card">
           <h4>notebook 选择器速查</h4>
-          <p class="hint">点击任一预置即可在左侧示例 DOM 上试跑（部分契约元素存在于对应模拟站点页）：</p>
+          <p class="hint">点击任一预置即可试跑。带「→」标注的目标元素在对应模拟站点页，本页会提示未命中：</p>
           <div class="preset-list">
             <button v-for="p in PRESETS" :key="p.sel" class="preset" @click="usePreset(p)">
               <span class="lab-tag" :class="p.mode === 'css' ? 'blue' : 'green'">{{ p.mode }}</span>
               <span class="preset-label">{{ p.label }}</span>
+              <span class="preset-note">{{ p.note }}</span>
             </button>
           </div>
         </div>
 
         <div class="lab-card pg-note-card">
           <h4>小抄</h4>
+          <p class="cheat-group">XPath</p>
           <ul class="cheat">
             <li><code class="code-inline">//div[@id]</code> 选所有带 id 的 div</li>
             <li><code class="code-inline">//a[contains(text(),'通知')]</code> 文本包含匹配</li>
+            <li><code class="code-inline">//button[text()="搜索"]</code> 按按钮文字定位（闯关第 3 关点击展开会用）</li>
+            <li><code class="code-inline">//input[@type="text"]</code> 按属性匹配</li>
             <li><code class="code-inline">//*[@id="x"]/div[1]</code> 按位置索引（从 1 开始）</li>
             <li><code class="code-inline">a[last()]</code> 取最后一个（notebook 翻页用法）</li>
+            <li><code class="code-inline">//*[@id="kw"]</code> → CSS 等价写法 <code class="code-inline">#kw</code>（id、class 优先用 CSS 更短）</li>
+          </ul>
+          <p class="cheat-group">CSS</p>
+          <ul class="cheat">
             <li><code class="code-inline">.cls > a > p</code> 仅选直接子元素</li>
+            <li><code class="code-inline">input[name="wd"]</code> 按属性选择（百度搜索框）</li>
+            <li><code class="code-inline">h3.t</code> 同时匹配标签 + class</li>
           </ul>
         </div>
       </div>
@@ -362,6 +386,9 @@ const sampleResults = computed(() => [
   margin: 0; padding-left: 20px; font-size: 12.5px; color: var(--lab-ink-2);
   max-height: 200px; overflow-y: auto;
 }
+.preset-note { margin-left: auto; font-size: 11.5px; color: #5f6b7a; flex: 0 0 auto; }
+.cheat-group { margin: 10px 0 4px; font-size: 12px; font-weight: 700; color: var(--lab-ink-3); letter-spacing: 1px; }
+.cheat-group:first-of-type { margin-top: 0; }
 .pg-texts li { padding: 2px 0; word-break: break-all; }
 .pg-preset-card h4, .pg-note-card h4 { margin: 0 0 8px; font-size: 15px; }
 .pg-preset-card .hint { font-size: 12px; color: var(--lab-ink-3); margin: 0 0 10px; }

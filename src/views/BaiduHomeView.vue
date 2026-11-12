@@ -76,14 +76,15 @@ watchEffect(() => {
       </div>
     </div>
 
-    <!-- 主体 -->
-    <div class="bd-main">
+    <!-- 主体（main landmark：读屏可直接跳转；拟真外观不变） -->
+    <main class="bd-main">
       <h1 class="bd-logo">百度</h1>
       <form class="bd-search-form" @submit.prevent="doSearch">
         <span class="bd-form-box">
           <input id="kw" v-model="kw" class="s_ipt" type="text" name="wd" autocomplete="off"
-                 placeholder="请输入搜索内容，如：转本">
-          <a href="javascript:;" class="soutu-btn" title="相机搜索（教学站未实现）"></a>
+                 aria-label="搜索关键词" placeholder="请输入搜索内容，如：转本">
+          <a href="javascript:;" class="soutu-btn" title="相机搜索（教学站未实现）"
+             aria-label="按图片搜索（教学站未实现）" aria-disabled="true"></a>
           <input id="su" class="btn" type="submit" value="百度一下">
         </span>
       </form>
@@ -108,7 +109,7 @@ watchEffect(() => {
         notebook 中 <code class="code-inline">driver.get('https://www.baidu.com/')</code> 请替换为
         <code class="code-inline">driver.get('http://SERVER:PORT/baidu')</code>
       </div>
-    </div>
+    </main>
 
     <footer class="bd-footer">
       <a href="javascript:;">关于百度</a><span class="sep">|</span>
@@ -252,8 +253,8 @@ watchEffect(() => {
 .teach-tip {
   margin-top: 30px;
   max-width: 720px;
-  font-size: 12.5px;
-  color: #9aa0a6;
+  font-size: 13px;
+  color: #5f6b7a; /* 对比度 ≥ 4.5:1（原 #9aa0a6 仅约 2.7:1，教学提示必须被看清） */
   line-height: 1.8;
   text-align: center;
   padding: 0 12px;

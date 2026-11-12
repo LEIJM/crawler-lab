@@ -24,7 +24,28 @@
   --lab-mono: ui-monospace, 'Cascadia Code', Consolas, 'Courier New', monospace;
 }
 
+/* 暗黑模式：已回退（复审 #2 结论）——hub 页 scoped 样式含大量硬编码 #fff 背景与
+   固定文字色，仅覆盖 :root token 会产生"浅字白底"不可读的破碎观感，净收益为负。
+   正确做法是先把全部硬编码色值 token 化，再引入 prefers-color-scheme 分支。 */
+
 * { box-sizing: border-box; }
+
+/* 键盘焦点可见性：全局统一，覆盖按钮/链接/输入框（此前键盘 Tab 无任何指示） */
+:focus-visible {
+  outline: 2px solid var(--lab-blue);
+  outline-offset: 2px;
+}
+
+/* 视觉隐藏（供读屏使用的 h1 / label 等） */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 html, body {
   margin: 0;
@@ -172,7 +193,7 @@ button {
   white-space: pre;
   margin: 0;
 }
-.lab-code .cm { color: #7c88a1; }
+.lab-code .cm { color: #94a3b8; } /* 提亮注释色：12.5px 小字对比度需 ≥ 4.5:1 */
 .lab-code .st { color: #9ae6b4; }
 .lab-code .kw { color: #93c5fd; }
 

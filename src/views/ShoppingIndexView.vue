@@ -86,6 +86,7 @@ onMounted(() => {
             </div>
             <div class="h-search">
               <input v-model="keyword" type="text" class="search-input" name="keyword"
+                     aria-label="搜索书名 / 作者 / 关键词"
                      placeholder="请输入书名 / 作者 / 关键词，如：大数据">
               <button class="search-btn" type="button" @click="doSearch">搜索</button>
             </div>
@@ -316,8 +317,8 @@ onMounted(() => {
   background: #fff;
   border: 1px dashed #d9d9d9;
   border-radius: 8px;
-  font-size: 12px;
-  color: #888;
+  font-size: 13px;
+  color: #5f6b7a; /* 教学提示对比度 ≥ 4.5:1（原 #888 约 3.5:1） */
   line-height: 1.9;
 }
 

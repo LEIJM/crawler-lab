@@ -56,8 +56,9 @@ const initials = computed(() => props.book.title.replace(/[（(].*$/, '').slice(
   font-size: 14px;
   line-height: 1.45;
   color: #333;
-  height: 40px;
+  min-height: 40px; /* 改 min-height：两行截断不再切半行（原固定 height 会在第三行露半截） */
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;

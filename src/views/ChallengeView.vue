@@ -19,9 +19,12 @@ try {
   }
 } catch { /* 存储不可用时保持默认 */ }
 const checking = ref(-1)
+// 答错反馈：P1 教学优化——学生卡住时给出格式提示，避免盲试
+const failMsgs = ref(['', '', '', '', '', ''])
 
 async function submitLevel(level) {
   checking.value = level
+  failMsgs.value[level - 1] = ''
   try {
     const res = await fetch('/api/challenge/check', {
       method: 'POST',
@@ -34,7 +37,14 @@ async function submitLevel(level) {
       try {
         localStorage.setItem('challenge-passed', JSON.stringify(passed.value))
       } catch { /* 隐私模式等存储不可用时静默降级为会话内状态 */ }
+    } else {
+      const ans = answers.value[level - 1] || ''
+      failMsgs.value[level - 1] = !ans.trim()
+        ? '请输入暗号后再提交（形如 CT-XXXX，注意完整复制，含 CT- 前缀）'
+        : '答案不正确。检查暗号是否完整（含 CT- 前缀、无多余空格），并用爬虫重新抓取确认。'
     }
+  } catch {
+    failMsgs.value[level - 1] = '网络异常，请稍后重试'
   } finally {
     checking.value = -1
   }
@@ -136,9 +146,12 @@ const LEVELS = [
     <div class="ch-head">
       <div>
         <h2>爬虫闯关 · 六关</h2>
-        <p class="ch-sub">每一关的页面里藏着一个「关卡暗号」（形如 CT-xxxx），用你的爬虫把它挖出来并提交。</p>
+        <p class="ch-sub">每一关的页面里藏着一个「关卡暗号」（形如 CT-xxxx），用你的爬虫把它挖出来并提交。
+          卡住了？先去 <router-link to="/playground">选择器练习场</router-link> 热身，或查
+          <router-link to="/docs">教学文档</router-link> 的 API 契约。</p>
       </div>
-      <div class="ch-progress">
+      <div class="ch-progress" role="progressbar" aria-valuemin="0" aria-valuemax="6"
+           :aria-valuenow="passCount" aria-label="通关进度">
         <b>{{ passCount }}</b><span>/ 6 已通关</span>
         <div class="ch-bar"><div class="ch-bar-in" :style="{ width: (passCount / 6) * 100 + '%' }"></div></div>
       </div>
@@ -165,11 +178,13 @@ const LEVELS = [
         </ul>
       </div>
       <div class="lv-check">
-        <input v-model="answers[0]" placeholder="输入第 1 关暗号，如 CT-XXXX" @keydown.enter="submitLevel(1)">
+        <input v-model="answers[0]" placeholder="输入第 1 关暗号，如 CT-XXXX"
+               aria-label="第 1 关暗号" @keydown.enter="submitLevel(1)">
         <button class="lab-btn small" :disabled="checking === 1 || passed[0]" @click="submitLevel(1)">
           {{ passed[0] ? '通过' : '提交' }}
         </button>
       </div>
+      <p v-if="failMsgs[0]" class="lv-fail" role="alert">{{ failMsgs[0] }}</p>
     </section>
 
     <!-- ===== 第 2 关 ===== -->
@@ -195,11 +210,13 @@ const LEVELS = [
         </div>
       </div>
       <div class="lv-check">
-        <input v-model="answers[1]" placeholder="输入第 2 关暗号" @keydown.enter="submitLevel(2)">
+        <input v-model="answers[1]" placeholder="输入第 2 关暗号"
+               aria-label="第 2 关暗号" @keydown.enter="submitLevel(2)">
         <button class="lab-btn small" :disabled="checking === 2 || passed[1]" @click="submitLevel(2)">
           {{ passed[1] ? '通过' : '提交' }}
         </button>
       </div>
+      <p v-if="failMsgs[1]" class="lv-fail" role="alert">{{ failMsgs[1] }}</p>
     </section>
 
     <!-- ===== 第 3 关 ===== -->
@@ -214,18 +231,21 @@ const LEVELS = [
       <p class="lv-task">问题答案默认隐藏，需要先点击问题展开。第 4 个 FAQ 的答案中藏着暗号。</p>
       <div class="lv-body">
         <div class="faq-item" v-for="(f, i) in FAQS" :key="i" :class="{ open: openFaq === i }">
-          <p class="faq-q" @click="openFaq = openFaq === i ? -1 : i">
-            <span class="faq-mark">{{ openFaq === i ? '−' : '+' }}</span>{{ f.q }}
-          </p>
+          <!-- 改为 button：键盘可达（Enter/空格可展开），不影响点击展开的爬虫考点 -->
+          <button class="faq-q" :aria-expanded="openFaq === i" @click="openFaq = openFaq === i ? -1 : i">
+            <span class="faq-mark" aria-hidden="true">{{ openFaq === i ? '−' : '+' }}</span>{{ f.q }}
+          </button>
           <p v-show="openFaq === i" class="faq-a">{{ f.a }}</p>
         </div>
       </div>
       <div class="lv-check">
-        <input v-model="answers[2]" placeholder="输入第 3 关暗号" @keydown.enter="submitLevel(3)">
+        <input v-model="answers[2]" placeholder="输入第 3 关暗号"
+               aria-label="第 3 关暗号" @keydown.enter="submitLevel(3)">
         <button class="lab-btn small" :disabled="checking === 3 || passed[2]" @click="submitLevel(3)">
           {{ passed[2] ? '通过' : '提交' }}
         </button>
       </div>
+      <p v-if="failMsgs[2]" class="lv-fail" role="alert">{{ failMsgs[2] }}</p>
     </section>
 
     <!-- ===== 第 4 关 ===== -->
@@ -239,24 +259,29 @@ const LEVELS = [
       </header>
       <p class="lv-task">销售数据分 5 页展示，请把 5 页数据全部爬下来，找到 <strong>第 5 页最后一行</strong>"备注"中的暗号。</p>
       <div class="lv-body">
-        <table id="sales-table">
-          <thead><tr><th>序号</th><th>月份</th><th>区域</th><th>销售额(万)</th><th>备注</th></tr></thead>
-          <tbody>
-            <tr v-for="r in saleRows" :key="r.page + '-' + r.row">
-              <td>{{ (r.page - 1) * 8 + r.row }}</td><td>{{ r.month }}</td><td>{{ r.region }}</td><td>{{ r.amount }}</td><td>{{ r.note }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- 表格包一层横向滚动容器：移动端不再撑破布局（#sales-table 契约不变） -->
+        <div class="table-scroll">
+          <table id="sales-table">
+            <thead><tr><th>序号</th><th>月份</th><th>区域</th><th>销售额(万)</th><th>备注</th></tr></thead>
+            <tbody>
+              <tr v-for="r in saleRows" :key="r.page + '-' + r.row">
+                <td>{{ (r.page - 1) * 8 + r.row }}</td><td>{{ r.month }}</td><td>{{ r.region }}</td><td>{{ r.amount }}</td><td>{{ r.note }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div class="pager">
           <button v-for="p in 5" :key="p" class="pager-btn" :class="{ cur: salePage === p }" @click="salePage = p">{{ p }}</button>
         </div>
       </div>
       <div class="lv-check">
-        <input v-model="answers[3]" placeholder="输入第 4 关暗号" @keydown.enter="submitLevel(4)">
+        <input v-model="answers[3]" placeholder="输入第 4 关暗号"
+               aria-label="第 4 关暗号" @keydown.enter="submitLevel(4)">
         <button class="lab-btn small" :disabled="checking === 4 || passed[3]" @click="submitLevel(4)">
           {{ passed[3] ? '通过' : '提交' }}
         </button>
       </div>
+      <p v-if="failMsgs[3]" class="lv-fail" role="alert">{{ failMsgs[3] }}</p>
     </section>
 
     <!-- ===== 第 5 关 ===== -->
@@ -268,8 +293,9 @@ const LEVELS = [
         <span class="lv-points">考点：{{ LEVELS[4].points }}</span>
         <span v-if="passed[4]" class="lab-tag green">已通关 ✓</span>
       </header>
-      <p class="lv-task">爬取的数据有时会被"包装"。下方面板中的两段乱码各藏着一个暗号（解码后是同一串字符），
-        试着用 Python 的 <code class="code-inline">base64</code> 模块或字符串切片处理。</p>
+      <p class="lv-task">爬取的数据有时会被"包装"。下方面板的两段数据各藏着一个暗号（解码后是同一串字符）：
+        片段一是 <strong>Base64 编码</strong>（用 Python 的 <code class="code-inline">base64.b64decode(...).decode()</code> 解码），
+        片段二是<strong>字符串倒序</strong>（用切片 <code class="code-inline">s[::-1]</code> 反转）。</p>
       <div class="lv-body">
         <div id="secret-panel">
           <p class="secret-line"><b>片段一（Base64）：</b><code>{{ B64_FLAG }}</code></p>
@@ -277,11 +303,13 @@ const LEVELS = [
         </div>
       </div>
       <div class="lv-check">
-        <input v-model="answers[4]" placeholder="输入第 5 关暗号" @keydown.enter="submitLevel(5)">
+        <input v-model="answers[4]" placeholder="输入第 5 关暗号"
+               aria-label="第 5 关暗号" @keydown.enter="submitLevel(5)">
         <button class="lab-btn small" :disabled="checking === 5 || passed[4]" @click="submitLevel(5)">
           {{ passed[4] ? '通过' : '提交' }}
         </button>
       </div>
+      <p v-if="failMsgs[4]" class="lv-fail" role="alert">{{ failMsgs[4] }}</p>
     </section>
 
     <!-- ===== 第 6 关 ===== -->
@@ -294,21 +322,26 @@ const LEVELS = [
         <span v-if="passed[5]" class="lab-tag green">已通关 ✓</span>
       </header>
       <p class="lv-task">接口 <code class="code-inline">GET /api/challenge/secret</code> 会校验请求头
-        <code class="code-inline">X-Student-Id</code>。不带请求头会被 403 拒绝，带上则返回暗号。
-        点击下方按钮观察页面行为，再分别用 <b>带 / 不带</b> 请求头的 requests 复现这两种响应。</p>
+        <code class="code-inline">X-Student-Id</code>。本关目标（请完成两个子任务）：
+        ① 用<b>不带</b>请求头的 requests 复现「被拒」响应（注意是 HTTP 200 + 响应体 <code class="code-inline">code:403</code>，
+        请判断 <code class="code-inline">res.json()['code']</code> 而非 <code class="code-inline">res.status_code</code>）；
+        ② 用<b>带</b>请求头的 requests 拿到暗号。
+        下方按钮仅供"偷看"页面自带身份的行为——点它可直接看到响应，但请务必用 requests 各复现一次再提交。</p>
       <div class="lv-body">
         <button class="lab-btn ghost" :disabled="secretLoading" @click="loadSecret(true)">
-          {{ secretLoading ? '请求中…' : '用页面身份请求接口' }}
+          {{ secretLoading ? '请求中…' : '（偷看）用页面身份请求接口' }}
         </button>
         <pre v-if="secretResp" class="lab-code lv-code">{{ secretResp }}</pre>
         <pre v-else class="lab-code lv-code">提示：requests.get(url, headers={'X-Student-Id': 'data221'})</pre>
       </div>
       <div class="lv-check">
-        <input v-model="answers[5]" placeholder="输入第 6 关暗号" @keydown.enter="submitLevel(6)">
+        <input v-model="answers[5]" placeholder="输入第 6 关暗号"
+               aria-label="第 6 关暗号" @keydown.enter="submitLevel(6)">
         <button class="lab-btn small" :disabled="checking === 6 || passed[5]" @click="submitLevel(6)">
           {{ passed[5] ? '通过' : '提交' }}
         </button>
       </div>
+      <p v-if="failMsgs[5]" class="lv-fail" role="alert">{{ failMsgs[5] }}</p>
     </section>
   </div>
 </template>
@@ -355,8 +388,15 @@ const LEVELS = [
 .news-date { color: #94a3b8; font-size: 12px; font-family: var(--lab-mono); flex: 0 0 auto; }
 
 .faq-item { border: 1px solid var(--lab-line); border-radius: 9px; margin-bottom: 8px; overflow: hidden; }
-.faq-q { margin: 0; padding: 10px 14px; cursor: pointer; font-size: 13.5px; font-weight: 600; user-select: none; }
+/* 改用 button 后重置默认样式，视觉与原 p 版本一致；获得键盘可达性 */
+.faq-q {
+  display: block; width: 100%; margin: 0; padding: 10px 14px; cursor: pointer;
+  font-size: 13.5px; font-weight: 600; user-select: none; text-align: left;
+  border: none; background: transparent; color: inherit; font-family: inherit;
+}
 .faq-q:hover { background: #f8fafc; }
+.lv-fail { margin: 0; padding: 0 20px 14px; color: var(--lab-red); font-size: 13px; }
+.table-scroll { overflow-x: auto; }
 .faq-mark { color: var(--lab-blue); margin-right: 8px; font-family: var(--lab-mono); }
 .faq-a { margin: 0; padding: 0 14px 12px 36px; color: var(--lab-ink-2); font-size: 13px; }
 
