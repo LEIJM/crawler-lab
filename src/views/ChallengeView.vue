@@ -9,7 +9,15 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 /* ---------- 通用状态 ---------- */
 const answers = ref(['', '', '', '', '', ''])
+// 通关状态持久化到 localStorage（答案仍在服务端校验，本地仅存 pass 标记），
+// 学生刷新/断点续练不丢进度
 const passed = ref([false, false, false, false, false, false])
+try {
+  const saved = JSON.parse(localStorage.getItem('challenge-passed') || '[]')
+  if (Array.isArray(saved) && saved.length === 6) {
+    passed.value = saved.map((v) => !!v)
+  }
+} catch { /* 存储不可用时保持默认 */ }
 const checking = ref(-1)
 
 async function submitLevel(level) {
@@ -21,7 +29,12 @@ async function submitLevel(level) {
       body: JSON.stringify({ level, answer: answers.value[level - 1] })
     })
     const data = await res.json()
-    if (data.data?.pass) passed.value[level - 1] = true
+    if (data.data?.pass) {
+      passed.value[level - 1] = true
+      try {
+        localStorage.setItem('challenge-passed', JSON.stringify(passed.value))
+      } catch { /* 隐私模式等存储不可用时静默降级为会话内状态 */ }
+    }
   } finally {
     checking.value = -1
   }

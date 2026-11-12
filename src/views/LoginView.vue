@@ -33,6 +33,11 @@ function refreshCaptcha() {
   captchaSrc.value = `/kaptcha.jpg?t=${Date.now()}`
 }
 
+// Vue 模板表达式无法访问 window 全局，须封装为方法
+function openSearch() {
+  window.open('/search?keyword=&jc=', '_blank')
+}
+
 async function submitLogin() {
   msg.value = ''
   if (!username.value.trim() || !password.value || !verifyCode.value.trim()) {
@@ -102,7 +107,7 @@ onMounted(() => {
             <div class="h-notice"><span class="notice-bar">登录后可享受教材征订、样书申请等服务</span></div>
             <div class="h-search">
               <input type="text" class="search-input" placeholder="请输入书名 / 作者 / 关键词">
-              <button class="search-btn" type="button" @click="window.open('/search?keyword=&jc=', '_blank')">搜索</button>
+              <button class="search-btn" type="button" @click="openSearch">搜索</button>
             </div>
           </div>
         </div>

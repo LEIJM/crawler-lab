@@ -29,7 +29,7 @@ import { fileURLToPath } from 'node:url'
 import { drawCaptchaPNG, randomCode, crc32 } from './captcha.js'
 import { USERS, CHALLENGE_ANSWERS, parseCookies } from './api.js'
 import { handleApi } from './http-adapter.js'
-import { seal, unseal, issueCaptchaToken, readCaptchaToken } from './token.js'
+import { seal, unseal, issueCaptchaToken, readCaptchaToken, SECRET_IS_DEFAULT } from './token.js'
 
 export { handleApi }
 
@@ -67,7 +67,12 @@ function sendJSON(res, status, obj, headers = {}) {
 
 function serveStatic(req, res, pathname) {
   let filePath = path.join(DIST_DIR, pathname === '/' ? 'index.html' : pathname)
-  if (!filePath.startsWith(DIST_DIR)) return sendJSON(res, 403, { code: 403, msg: 'forbidden' })
+  // 防御性路径穿越检查：用 path.relative + 前缀判断，避免 startsWith 对
+  // 同前缀目录（如 dist 与 dist-evil）的误判
+  const rel = path.relative(DIST_DIR, filePath)
+  if (rel.startsWith('..') || path.isAbsolute(rel)) {
+    return sendJSON(res, 403, { code: 403, msg: 'forbidden' })
+  }
   fs.readFile(filePath, (err, data) => {
     if (err) {
       fs.readFile(path.join(DIST_DIR, 'index.html'), (e2, html) => {
@@ -77,9 +82,15 @@ function serveStatic(req, res, pathname) {
       return
     }
     const ext = path.extname(filePath).toLowerCase()
+    // Vite 带内容哈希的产物可长缓存；其余（html/根级文件）短缓存或不缓存
+    const isHashedAsset = pathname.startsWith('/assets/')
     send(res, 200, data, {
       'Content-Type': MIME[ext] || 'application/octet-stream',
-      'Cache-Control': ext === '.html' ? 'no-store' : 'public, max-age=3600'
+      'Cache-Control': ext === '.html'
+        ? 'no-store'
+        : isHashedAsset
+          ? 'public, max-age=31536000, immutable'
+          : 'public, max-age=3600'
     })
   })
 }
@@ -155,6 +166,26 @@ async function selftest() {
   })
   await t('闯关答案表完整（6 关）', () => Object.keys(CHALLENGE_ANSWERS).length === 6)
   await t('MIME 表覆盖关键类型', () => !!MIME['.html'] && !!MIME['.js'] && !!MIME['.svg'])
+  await t('Node fetch 支持 getSetCookie（需 Node ≥ 18.14）', () => {
+    const h = new Headers()
+    h.append('Set-Cookie', 'a=1')
+    h.append('Set-Cookie', 'b=2')
+    return typeof h.getSetCookie === 'function' && h.getSetCookie().length === 2
+  })
+  await t('请求体大小限制生效', async () => {
+    const { handleApiRequest } = await import('./api.js')
+    const ok = await handleApiRequest(new Request('http://x/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: 'username=student&password=123456&verifyCode=0000'
+    }))
+    const bad = await handleApiRequest(new Request('http://x/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: 'username=' + 'x'.repeat(20 * 1024)
+    }))
+    return ok !== null && bad !== null && bad.status === 500
+  })
 
   const failed = results.filter(([ok]) => !ok)
   for (const [ok, name] of results) console.log((ok ? '  ✓ ' : '  ✗ ') + name)
@@ -176,6 +207,10 @@ if (isMain && SELFTEST) {
 } else if (isMain) {
   if (!fs.existsSync(path.join(DIST_DIR, 'index.html'))) {
     console.warn('[警告] 未发现 dist/index.html：请先执行 npm run build，再启动服务。')
+  }
+  if (SECRET_IS_DEFAULT) {
+    console.warn('[警告] 未设置 CAPTCHA_SECRET 环境变量，正在使用源码内置默认密钥。\n' +
+      '         知道源码的人可据此伪造验证码令牌。生产部署请通过环境变量配置强随机密钥。')
   }
   server.listen(PORT, () => {
     console.log(`Data221 爬虫教学实训站已启动`)

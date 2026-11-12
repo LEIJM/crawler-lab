@@ -6,7 +6,12 @@
  * Node 生产服务器与边缘运行时共用同一套逻辑，教学接口契约不变。
  */
 const DEFAULT_SECRET = 'data221-crawler-lab-captcha-key'
-export const SESSION_TTL = 10 * 60 * 1000
+// 验证码有效期：无状态令牌无法在服务端"删除"，缩短 TTL 是抑制重放的主要手段
+// （10 分钟内同一 RYSESSID 可反复尝试登录；2 分钟在课堂操作上足够充裕）
+export const SESSION_TTL = 2 * 60 * 1000
+export const SECRET_IS_DEFAULT = !(() => {
+  try { return !!process.env?.CAPTCHA_SECRET } catch { return false }
+})()
 
 function secretString() {
   try {

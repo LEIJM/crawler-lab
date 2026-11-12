@@ -70,8 +70,18 @@ function png(body, extraHeaders = {}) {
   return new Response(body, { status: 200, headers })
 }
 
+const BODY_LIMIT = 16 * 1024 // 与 Node 适配层 64KB 限制对齐并更收紧：教学接口载荷远小于此
+
 async function parseBody(request) {
+  // 统一三端（Node / Workers / Pages）的请求体大小限制
+  const declared = Number(request.headers.get('content-length') || 0)
+  if (declared > BODY_LIMIT) {
+    throw new Error(`请求体过大（>${BODY_LIMIT} 字节）`)
+  }
   const raw = await request.text()
+  if (raw.length > BODY_LIMIT) {
+    throw new Error(`请求体过大（>${BODY_LIMIT} 字节）`)
+  }
   const type = String(request.headers.get('content-type') || '')
   if (type.includes('application/json')) {
     try { return JSON.parse(raw || '{}') } catch { return {} }

@@ -1,15 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import BaiduHomeView from '../views/BaiduHomeView.vue'
-import BaiduResultsView from '../views/BaiduResultsView.vue'
-import ShoppingIndexView from '../views/ShoppingIndexView.vue'
-import SearchResultsView from '../views/SearchResultsView.vue'
-import BookDetailView from '../views/BookDetailView.vue'
-import LoginView from '../views/LoginView.vue'
-import PlaygroundView from '../views/PlaygroundView.vue'
-import ChallengeView from '../views/ChallengeView.vue'
-import CaptchaView from '../views/CaptchaView.vue'
-import DocsView from '../views/DocsView.vue'
+// 核心练习页保持同步加载（首屏直达、Selenium 契约稳定）；
+// 辅助/文档页懒加载，Vite 自动分包，减小首屏 chunk。
+const BaiduHomeView = () => import('../views/BaiduHomeView.vue')
+const BaiduResultsView = () => import('../views/BaiduResultsView.vue')
+const ShoppingIndexView = () => import('../views/ShoppingIndexView.vue')
+const SearchResultsView = () => import('../views/SearchResultsView.vue')
+const BookDetailView = () => import('../views/BookDetailView.vue')
+const LoginView = () => import('../views/LoginView.vue')
+const PlaygroundView = () => import('../views/PlaygroundView.vue')
+const ChallengeView = () => import('../views/ChallengeView.vue')
+const CaptchaView = () => import('../views/CaptchaView.vue')
+const DocsView = () => import('../views/DocsView.vue')
 
 /**
  * 路由设计原则：
