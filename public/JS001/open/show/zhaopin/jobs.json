@@ -1,0 +1,156 @@
+[
+  {
+    "id": "6836356",
+    "title": "高级数据分析师",
+    "company": "字节跳动",
+    "province": "湖北",
+    "city": "武汉",
+    "district": "洪山区",
+    "salary": "8k-15k",
+    "exp": "经验3-5年",
+    "edu": "本科及以上"
+  },
+  {
+    "id": "5001277",
+    "title": "Java开发工程师",
+    "company": "腾讯",
+    "province": "广东",
+    "city": "深圳",
+    "district": "南山区",
+    "salary": "10k-18k",
+    "exp": "经验1-3年",
+    "edu": "硕士及以上"
+  },
+  {
+    "id": "6836357",
+    "title": "前端开发工程师",
+    "company": "字节跳动",
+    "province": "北京",
+    "city": "北京",
+    "district": "海淀区",
+    "salary": "15k-25k",
+    "exp": "经验3-5年",
+    "edu": "本科及以上"
+  },
+  {
+    "id": "6836360",
+    "title": "数据产品经理",
+    "company": "字节跳动",
+    "province": "北京",
+    "city": "北京",
+    "district": "朝阳区",
+    "salary": "18k-30k",
+    "exp": "经验5-10年",
+    "edu": "本科及以上"
+  },
+  {
+    "id": "6001123",
+    "title": "爬虫工程师",
+    "company": "美团",
+    "province": "北京",
+    "city": "北京",
+    "district": "朝阳区",
+    "salary": "15k-25k",
+    "exp": "经验1-3年",
+    "edu": "本科及以上"
+  },
+  {
+    "id": "6002108",
+    "title": "算法工程师",
+    "company": "阿里巴巴",
+    "province": "浙江",
+    "city": "杭州",
+    "district": "西湖区",
+    "salary": "20k-35k",
+    "exp": "经验3-5年",
+    "edu": "硕士及以上"
+  },
+  {
+    "id": "6010325",
+    "title": "测试工程师",
+    "company": "美味不用等",
+    "province": "上海",
+    "city": "上海",
+    "district": "静安区",
+    "salary": "8k-12k",
+    "exp": "经验1-3年",
+    "edu": "学历不限"
+  },
+  {
+    "id": "6012216",
+    "title": "运营专员",
+    "company": "字节跳动",
+    "province": "湖北",
+    "city": "武汉",
+    "district": "东湖高新区",
+    "salary": "4k-6k",
+    "exp": "经验不限",
+    "edu": "学历不限"
+  },
+  {
+    "id": "6023057",
+    "title": "UI设计师",
+    "company": "快手",
+    "province": "北京",
+    "city": "北京",
+    "district": "海淀区",
+    "salary": "10k-18k",
+    "exp": "经验1-3年",
+    "edu": "本科及以上"
+  },
+  {
+    "id": "6031129",
+    "title": "大数据开发工程师",
+    "company": "华为",
+    "province": "广东",
+    "city": "深圳",
+    "district": "龙岗区",
+    "salary": "15k-28k",
+    "exp": "经验3-5年",
+    "edu": "硕士及以上"
+  },
+  {
+    "id": "6040216",
+    "title": "Python开发工程师",
+    "company": "百度",
+    "province": "北京",
+    "city": "北京",
+    "district": "海淀区",
+    "salary": "12k-20k",
+    "exp": "经验1-3年",
+    "edu": "本科及以上"
+  },
+  {
+    "id": "6051132",
+    "title": "新媒体运营",
+    "company": "三联生活周刊",
+    "province": "北京",
+    "city": "北京",
+    "district": "朝阳区",
+    "salary": "6k-10k",
+    "exp": "经验不限",
+    "edu": "本科及以上"
+  },
+  {
+    "id": "6060231",
+    "title": "数据分析师",
+    "company": "京东",
+    "province": "北京",
+    "city": "北京",
+    "district": "大兴区",
+    "salary": "10k-15k",
+    "exp": "经验1-3年",
+    "edu": "本科及以上"
+  },
+  {
+    "id": "6071054",
+    "title": "内容编辑",
+    "company": "拾遗",
+    "province": "广东",
+    "city": "广州",
+    "district": "天河区",
+    "salary": "5k-8k",
+    "exp": "经验1-3年",
+    "edu": "本科及以上"
+  }
+]

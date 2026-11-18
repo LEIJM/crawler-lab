@@ -243,9 +243,53 @@ print(res.json())   # 缺少请求头时会收到 {"code":403,...}`
       </div>
     </section>
 
+    <!-- 作业靶站 -->
+    <section class="lab-card docs-sec">
+      <h3>4 · 作业靶站（requests + BeautifulSoup）</h3>
+      <p class="sec-sub">作业 A/B/C/D 四主题的靶页为<b>静态 HTML</b>（requests 直接可解析，无需浏览器渲染），
+        完整沿用了作业原题路径 /JS001/open/show/…，把原代码里的域名换成本站地址即可运行。
+        数据由 <code class="code-inline">npm run gen:homework</code> 生成（scripts/gen-homework-pages.mjs），改数据后重新生成即可。</p>
+      <div class="table-scroll">
+        <table class="lab-table">
+          <thead><tr><th>主题</th><th>靶页路径</th><th>DOM 契约（与作业代码一致）</th><th>边界样本</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>A 微信公众号</b></td>
+              <td><code>/JS001/open/show/weixindata.html</code></td>
+              <td><code>find('span', string=name).find_parent('tr')</code>；td[3] 预估活跃粉丝、td[4] 头条平均阅读、td[7] 原创平均阅读</td>
+              <td>阅读数「10万+ / 9万+」与纯数字两种形态；粉丝 285万 / 532万（YES/NO 边界）</td>
+            </tr>
+            <tr>
+              <td><b>B 电影票房</b></td>
+              <td><code>/JS001/open/show/box_office_on_a_certain_day.html</code></td>
+              <td><code>span.movie-name</code>、<code>span.releaseInfo</code>、<code>div.boxDesc-wrap.red-color</code>、<code>div.countRate-wrap</code></td>
+              <td>上映首日→0（一日成交）、点映→-1（翱翔雄心）、&lt;0.1%→0.001（某种夜晚）；金刚川→[20, 432.33, 0.248]</td>
+            </tr>
+            <tr>
+              <td><b>C 招聘网站</b></td>
+              <td><code>/JS001/open/show/zhaopin/index.html</code>（index_2/3/4 翻页）<br><code>/JS001/open/show/zhaopin/jobs/{id}.html</code>（14 个详情页）</td>
+              <td>详情页：<code>h4.company</code>（文本以「招聘」结尾）、<code>.job-name[title]</code>、<code>dd.job_request h3</code> 的 spans[0]=薪资 / spans[1]=省市 / spans[3]=学历；<br>列表页：<code>#s_position_list &gt; ul &gt; li[data-company]</code>、<code>li &gt; em</code>（城市）</td>
+              <td>6836356 → ['高级数据分析师','8k','本科','字节跳动','武汉']；列表页字节跳动北京职位恰好 2 个、美味不用等 0 个</td>
+            </tr>
+            <tr>
+              <td><b>D 美食热门榜</b></td>
+              <td><code>/JS001/open/show/food/restaurant_list.html</code></td>
+              <td><code>find('span', class_='shop-name', string=name).find_parent('tr')</code>；td[3] 人均（'95元'）、td[4] 评分（'4.8'）、td[5] 评论数（'1.2万' / '8563'）</td>
+              <td>评论数「万」与非「万」两种形态；海底捞火锅(江汉路店) → [95, 4.8, 12000]</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="lab-note warn">
+        <span>作业代码用 <b>requests + BeautifulSoup</b> 直接解析 HTML——这正是靶页必须做成静态 HTML 的原因：
+          对 Vue SPA 路由发 requests 只会得到 index.html 空壳。四个靶页由生成脚本产出，
+          不走 Vue Router，三种部署形态（Node / Workers / Pages）零代码托管。</span>
+      </div>
+    </section>
+
     <!-- 常见报错与教学案例 -->
     <section class="lab-card docs-sec">
-      <h3>4 · 常见报错与教学案例</h3>
+      <h3>5 · 常见报错与教学案例</h3>
       <p class="sec-sub">这些「报错」都是精心设计的教学素材，碰到了先来这里对照，别急着改代码。</p>
       <div v-for="e in ERRORS" :key="e.name" class="err-item">
         <h4><code class="code-inline">{{ e.name }}</code> · {{ e.scene }}</h4>
@@ -257,7 +301,7 @@ print(res.json())   # 缺少请求头时会收到 {"code":403,...}`
 
     <!-- 合规说明 -->
     <section class="lab-card docs-sec">
-      <h3>5 · 合规与教学说明</h3>
+      <h3>6 · 合规与教学说明</h3>
       <ul class="rule-list">
         <li>本实训站为<b>教学模拟环境</b>：页面结构参照公开站点的 DOM 契约重建，所有数据（图书、搜索结果、验证码）均为程序生成的虚构数据，与任何真实站点无数据关联。</li>
         <li>站点应部署在<b>内网或教学专用服务器</b>上，仅用于课程实训；请勿作为真实业务系统对外提供服务。</li>

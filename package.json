@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "serve": "node server/server.js",
+    "gen:homework": "node scripts/gen-homework-pages.mjs",
     "selftest": "node server/server.js --selftest",
     "deploy": "npm run build && wrangler deploy",
     "deploy:pages": "npm run build && wrangler pages deploy --config wrangler.pages.jsonc --project-name crawler-lab"

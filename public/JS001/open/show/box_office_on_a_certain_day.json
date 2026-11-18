@@ -1,0 +1,107 @@
+[
+  {
+    "rank": 1,
+    "name": "金刚川",
+    "release_info": "已上映20天",
+    "box_office_wan": 432.33,
+    "show_rate": "24.8%"
+  },
+  {
+    "rank": 2,
+    "name": "一日成交",
+    "release_info": "上映首日",
+    "box_office_wan": 156.42,
+    "show_rate": "3.1%"
+  },
+  {
+    "rank": 3,
+    "name": "翱翔雄心",
+    "release_info": "点映",
+    "box_office_wan": 89.66,
+    "show_rate": "5.2%"
+  },
+  {
+    "rank": 4,
+    "name": "我和我的家乡",
+    "release_info": "已上映32天",
+    "box_office_wan": 1210.55,
+    "show_rate": "18.6%"
+  },
+  {
+    "rank": 5,
+    "name": "夺冠",
+    "release_info": "已上映45天",
+    "box_office_wan": 856.2,
+    "show_rate": "12.4%"
+  },
+  {
+    "rank": 6,
+    "name": "急先锋",
+    "release_info": "已上映38天",
+    "box_office_wan": 276.88,
+    "show_rate": "9.8%"
+  },
+  {
+    "rank": 7,
+    "name": "姜子牙",
+    "release_info": "已上映41天",
+    "box_office_wan": 1602.36,
+    "show_rate": "7.5%"
+  },
+  {
+    "rank": 8,
+    "name": "某种夜晚",
+    "release_info": "已上映30天",
+    "box_office_wan": 12.05,
+    "show_rate": "<0.1%"
+  },
+  {
+    "rank": 9,
+    "name": "掬水月在手",
+    "release_info": "已上映25天",
+    "box_office_wan": 68.9,
+    "show_rate": "1.2%"
+  },
+  {
+    "rank": 10,
+    "name": "一点就到家",
+    "release_info": "已上映35天",
+    "box_office_wan": 302.11,
+    "show_rate": "6.3%"
+  },
+  {
+    "rank": 11,
+    "name": "喜宝",
+    "release_info": "已上映42天",
+    "box_office_wan": 145.79,
+    "show_rate": "2.8%"
+  },
+  {
+    "rank": 12,
+    "name": "木兰：横空出世",
+    "release_info": "已上映28天",
+    "box_office_wan": 78.45,
+    "show_rate": "4.6%"
+  },
+  {
+    "rank": 13,
+    "name": " 七月之后",
+    "release_info": "已上映15天",
+    "box_office_wan": 34.5,
+    "show_rate": "1.9%"
+  },
+  {
+    "rank": 14,
+    "name": "半部喜剧",
+    "release_info": "已上映52天",
+    "box_office_wan": 198.66,
+    "show_rate": "2.2%"
+  },
+  {
+    "rank": 15,
+    "name": "生存家族",
+    "release_info": "已上映60天",
+    "box_office_wan": 45.33,
+    "show_rate": "0.9%"
+  }
+]

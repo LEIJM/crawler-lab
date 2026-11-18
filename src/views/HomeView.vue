@@ -33,6 +33,43 @@ const SITES = [
   }
 ]
 
+// 作业靶站（requests + BeautifulSoup 四主题，静态 HTML，仅替换域名即可运行）
+// 注意：链接为静态资源路径（不在 Vue Router 内），用原生 <a> 新窗口打开。
+const HOMEWORK = [
+  {
+    key: 'weixin',
+    tag: '作业 A',
+    name: '微信公众号排行榜',
+    href: '/JS001/open/show/weixindata.html',
+    task: '给定公众号名称，判断是否同时满足「头条阅读 > 9万、原创阅读 > 8万、活跃粉丝 < 300万」，返回 YES / NO。',
+    contract: "find('span', string=name).find_parent('tr') → td[3]/td[4]/td[7]"
+  },
+  {
+    key: 'boxoffice',
+    tag: '作业 B',
+    name: '电影票房（某日）',
+    href: '/JS001/open/show/box_office_on_a_certain_day.html',
+    task: '给定影片名，返回 [上映天数, 综合票房(万元), 排片占比]。首日→0、点映→-1、<0.1%→0.001。',
+    contract: '.movie-name / .releaseInfo / .boxDesc-wrap.red-color / .countRate-wrap'
+  },
+  {
+    key: 'zhaopin',
+    tag: '作业 C',
+    name: '招聘网站',
+    href: '/JS001/open/show/zhaopin/index.html',
+    task: '职位详情页返回 [职位名, 最低薪资, 学历, 公司, 城市]；列表页按公司统计北京职位数。',
+    contract: 'h4.company / .job-name[title] / dd.job_request h3 spans / #s_position_list li[data-company]'
+  },
+  {
+    key: 'food',
+    tag: '作业 D',
+    name: '美食热门榜',
+    href: '/JS001/open/show/food/restaurant_list.html',
+    task: '给定餐厅名，返回 [人均消费(int), 评分(float), 评论数(int)]，评论数含「万」需换算（1.2万→12000）。',
+    contract: "span.shop-name 精确匹配 → td[3]/td[4]/td[5]"
+  }
+]
+
 const TOOLS = [
   { path: '/playground', icon: '⌘', name: '选择器练习场', desc: '在线试写 CSS / XPath 选择器，实时高亮命中元素，notebook 关键选择器速查可一键试跑。' },
   { path: '/challenge', icon: '⚔', name: '爬虫闯关（6 关）', desc: '静态列表 → 异步加载 → 点击展开 → 分页表格 → 数据解码 → 请求头反爬，逐级通关。' },
@@ -205,6 +242,31 @@ driver.find_element(By.XPATH,
               </li>
             </ul>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 作业靶站（requests + bs4 四主题） -->
+    <section class="lab-section">
+      <div class="lab-container">
+        <div class="lab-section-head">
+          <h2>作业靶站 · 四大主题</h2>
+          <span class="sub">requests + BeautifulSoup 作业专用 · 页面为静态 HTML，仅替换域名即可运行</span>
+        </div>
+        <div class="lab-grid cols-4">
+          <div v-for="h in HOMEWORK" :key="h.key" class="lab-card homework-card">
+            <div class="homework-head">
+              <span class="lab-tag blue">{{ h.tag }}</span>
+              <h3>{{ h.name }}</h3>
+            </div>
+            <p class="homework-task">{{ h.task }}</p>
+            <a class="homework-link" :href="h.href" target="_blank" rel="noopener">打开靶页 ↗</a>
+            <code class="homework-contract">{{ h.contract }}</code>
+          </div>
+        </div>
+        <div class="lab-note warn" style="margin-top: 14px">
+          <span>四个靶页沿用了作业原题的完整路径（/JS001/open/show/...）：把作业代码里的
+            <code class="code-inline">http://72.itmc.org.cn:80</code> 替换为本站域名即可，其余一行不用改。</span>
         </div>
       </div>
     </section>
@@ -388,6 +450,17 @@ driver.find_element(By.XPATH,
 .tool-icon { font-size: 22px; color: var(--lab-indigo); }
 .tool-card h3 { font-size: 15.5px; margin: 10px 0 6px; }
 .tool-card p { font-size: 12.8px; color: var(--lab-ink-3); margin: 0; }
+
+/* 作业靶站卡 */
+.homework-card { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.homework-head { display: flex; align-items: center; gap: 8px; }
+.homework-head h3 { font-size: 15.5px; margin: 0; }
+.homework-task { font-size: 12.8px; color: var(--lab-ink-2); margin: 0; flex: 1; }
+.homework-link { font-size: 13px; font-weight: 600; }
+.homework-contract {
+  font-family: var(--lab-mono); font-size: 11px; color: var(--lab-ink-3);
+  background: #eef2f7; border-radius: 5px; padding: 4px 8px; word-break: break-all;
+}
 
 /* 表格 */
 .table-wrap { padding: 8px; overflow-x: auto; }

@@ -14,6 +14,7 @@
 | `server/captcha.js` | 纯手写 PNG 验证码生成器（CRC32 + zlib + 七段数码管字形），对应 `/kaptcha.jpg` |
 | `worker/` | Cloudflare Workers 入口（静态资源 + 接口） |
 | `functions/` | Cloudflare Pages Functions（与 Worker 同一套接口） |
+| `scripts/gen-homework-pages.mjs` | 作业靶站四主题静态页生成脚本（`npm run gen:homework`） |
 | `dist/` | `npm run build` 产物（部署时随 server 一起拷贝即可） |
 
 ## 快速开始
@@ -63,6 +64,23 @@ npm run deploy:pages        # Pages：构建 dist/，上传静态资源并启用
 |---|---|---|
 | `student` | `123456` | 学生账号（人邮 + 百度通用） |
 | `teacher` | `888888` | 教师账号 |
+
+## 作业靶页（requests + BeautifulSoup，四主题）
+
+`作业/` 文件夹四个主题（A 微信公众号 / B 电影票房 / C 招聘网站 / D 美食）的靶页为
+**静态 HTML**（放 `public/JS001/open/show/` 下，构建后三端零代码托管），完整沿用作业原题路径，
+学生只需把作业代码里的 `http://72.itmc.org.cn:80` 换成本站域名：
+
+| 主题 | 靶页路径 | 边界样本（与作业代码逐条对应） |
+|---|---|---|
+| A 微信公众号 | `/JS001/open/show/weixindata.html` | `10万+` 与纯数字两种阅读数形态；粉丝 285万（YES）/ 532万（NO） |
+| B 电影票房 | `/JS001/open/show/box_office_on_a_certain_day.html` | `金刚川 → [20, 432.33, 0.248]`；上映首日→0、点映→-1、`<0.1%`→0.001 |
+| C 招聘网站 | `/JS001/open/show/zhaopin/index{,_2,_3,_4}.html` + `jobs/{id}.html`（14 页） | `6836356 → ['高级数据分析师','8k','本科','字节跳动','武汉']`；列表页字节跳动北京职位恰 2 个 |
+| D 美食热门榜 | `/JS001/open/show/food/restaurant_list.html` | 评论数 `1.2万`（→12000）与 `8563` 两种形态；`海底捞火锅(江汉路店) → [95, 4.8, 12000]` |
+
+- 数据由 `scripts/gen-homework-pages.mjs` 生成：`npm run gen:homework`（改数据后重新生成即可）。
+- 静态化的原因：作业代码用 `requests` 直接解析 HTML，Vue SPA 路由对 requests 只会返回 `index.html` 空壳；
+  靶页不走 Vue Router。
 
 ## 核心 DOM 契约（与 notebook 代码严格一致）
 
